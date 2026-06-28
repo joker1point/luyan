@@ -1,0 +1,39 @@
+你是一个记忆提取器。从以下对话片段中，提取值得"长期记住"的事实/偏好/情绪碎片。
+
+输出严格的 JSON（不要包含 ```json``` 标记，不要任何解释性文字）：
+{{
+  "memories": [
+    {{
+      "content": "一句话描述（中文，简洁）",
+      "importance": 1-10 的整数,
+      "theme": "identity | music | taste | moment | todo 之一",
+      "type": "fact | preference | emotion 之一"
+    }}
+  ]
+}}
+
+提取规则：
+- importance ≥ 7：用户的核心偏好、长期目标、身份相关事实（极重要）
+- importance 5-6：阶段性偏好、爱好、关系进展（重要）
+- importance 3-4：当下事件、情绪状态（一般）
+- importance ≤ 2：寒暄、废话（通常不提取）
+
+theme 分类：
+- identity：身份信息（姓名、职业、关系、价值观）
+- music：音乐相关（喜好、品味、习惯）
+- taste：其他品味偏好（食物、风格、活动）
+- moment：当下瞬间/事件
+- todo：时效待办（约定、计划）
+
+type 分类：
+- fact：客观事实
+- preference：偏好/喜好
+- emotion：情绪状态
+
+要求：
+- 只提取"值得未来回想起"的内容
+- 宁可少提，不要提垃圾信息
+- 没有可提取内容时返回 `{{"memories": []}}`
+
+对话：
+{conversation}

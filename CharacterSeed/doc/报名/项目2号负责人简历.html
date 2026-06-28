@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文泓发 - 个人简历</title>
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-light: #e8f0fe;
+            --text: #202124;
+            --text-secondary: #5f6368;
+            --text-tertiary: #80868b;
+            --border: #dadce0;
+            --bg: #f8f9fa;
+            --white: #ffffff;
+            --tag-bg: #e8f0fe;
+            --tag-text: #1967d2;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
+            line-height: 1.75;
+            color: var(--text);
+            background-color: #e8eaed;
+            padding: 32px 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .resume {
+            max-width: 860px;
+            margin: 0 auto;
+            background-color: var(--white);
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+            color: #fff;
+            padding: 40px 56px 32px;
+            text-align: center;
+        }
+
+        .name {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 12px;
+        }
+
+        .contact-info {
+            font-size: 13px;
+            opacity: 0.9;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 6px 20px;
+        }
+
+        .contact-info span {
+            white-space: nowrap;
+        }
+
+        .content {
+            padding: 40px 56px 48px;
+        }
+
+        .section {
+            margin-bottom: 32px;
+        }
+
+        .section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: var(--primary);
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            display: inline-block;
+            width: 4px;
+            height: 18px;
+            background: var(--primary);
+            border-radius: 2px;
+            margin-right: 2px;
+        }
+
+        .experience-item {
+            margin-bottom: 22px;
+            padding-bottom: 22px;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .experience-item:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 4px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .item-title {
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text);
+        }
+
+        .item-date {
+            color: var(--text-tertiary);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .item-subtitle {
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .item-description {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .item-description ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .item-description li {
+            position: relative;
+            padding-left: 16px;
+            margin-bottom: 6px;
+        }
+
+        .item-description li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .item-description li:last-child {
+            margin-bottom: 0;
+        }
+
+        .item-description strong {
+            color: var(--text);
+        }
+
+        .summary-text {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.9;
+        }
+
+        .summary-text p {
+            margin-bottom: 10px;
+            text-indent: 2em;
+        }
+
+        .summary-text p:last-child {
+            margin-bottom: 0;
+        }
+
+        .tag-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: var(--tag-bg);
+            color: var(--tag-text);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .award-item {
+            display: flex;
+            align-items: baseline;
+            gap: 12px;
+            padding: 8px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .award-icon {
+            color: #f9ab00;
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+            .resume {
+                box-shadow: none;
+                border-radius: 0;
+                max-width: 100%;
+            }
+            .header {
+                background: #1a73e8 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .content {
+                padding: 32px 48px;
+            }
+            .experience-item {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                padding: 28px 24px 24px;
+            }
+            .content {
+                padding: 24px 20px;
+            }
+            .name {
+                font-size: 26px;
+            }
+            .item-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="resume">
+        <div class="header">
+            <div class="name">文泓发</div>
+            <div class="contact-info">
+                <span>📧 birenwenmou@qq.com</span>
+                <span>📱 17817502508</span>
+                <span>📍 广州市</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-title">个人简介</div>
+                <div class="summary-text">
+                    <p>深耕 AI 智能体与 RAG 技术领域，具备全栈独立交付能力。主导完成多个高质量项目：从 0 到 1 构建多智能体学习辅助系统（OpenAgents + Ollama），实现学情分析→资源匹配→练习优化的自动化闭环；独立开发 VDB-News 智能向量资讯平台，支持文档知识库构建与 AI 对话问答，日均处理 5000+ 资讯流。</p>
+                    <p><strong>核心竞争力：</strong><br>
+                    - AI 技术：精通 RAG 检索增强生成、LangChain 框架、多智能体通信机制<br>
+                    - 全栈开发：Python/FastAPI 后端 + 原生前端 + Docker/Nginx 部署<br>
+                    - 工程能力：独立完成从需求分析到上线运维的完整流程</p>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">教育背景</div>
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">计算机科学与技术</div>
+                        <div class="item-date">2025.09 - 至今（预计 2029.06 毕业）</div>
+                    </div>
+                    <div class="item-subtitle">广东工业大学 · 本科</div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">专业技能</div>
+                <div class="item-description">
+                    <ul>
+                        <li><strong>AI 智能体技术</strong>：精通 RAG 检索增强生成、LangChain 框架、多智能体通信机制；熟悉 Agent 架构设计、提示词工程、Dify/Coze 低代码平台</li>
+                        <li><strong>全栈开发</strong>：Python/FastAPI 后端开发、原生 HTML/CSS/JS 前端、RESTful API 设计、数据库设计与优化</li>
+                        <li><strong>工程实践</strong>：Docker 容器化、Nginx 反向代理、系统部署运维、CI/CD 基础流程</li>
+                    </ul>
+                </div>
+                <div style="margin-top: 16px;">
+                    <div style="font-weight: 700; font-size: 14px; color: var(--text); margin-bottom: 10px; padding-left: 2px;">▎个人技术栈全景图</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                        <div style="background: #f8f9fa; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 6px;">前端开发 (Frontend)</div>
+                            <div style="font-size: 12px; line-height: 1.9; color: var(--text-secondary);">
+                                基础与模板引擎：JSP / FreeMarker · HTML5 / CSS3 / JavaScript (ES6+)<br>
+                                现代前端框架：Vue.js（全家桶） · React.js<br>
+                                前端工程化：Webpack / Vite
+                            </div>
+                        </div>
+                        <div style="background: #f8f9fa; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 6px;">后端开发 (Backend)</div>
+                            <div style="font-size: 12px; line-height: 1.9; color: var(--text-secondary);">
+                                Java 生态：Spring Boot · Spring MVC · Struts · MyBatis / MyBatis-Plus · JPA / Hibernate · iBatis · JDBC<br>
+                                安全框架：Spring Security · Shiro · OAuth 2.0<br>
+                                微服务/分布式：Spring Cloud · Spring Cloud Alibaba · Dubbo<br>
+                                多语言能力：Python · Node.js<br>
+                                项目管理：Maven · Gradle · Ant<br>
+                                应用服务器：Tomcat · Nginx · Jetty · WebLogic · Apache<br>
+                                容器化/运维：Docker · K8s
+                            </div>
+                        </div>
+                        <div style="background: #f8f9fa; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 6px;">中间件与增强服务 (Middleware)</div>
+                            <div style="font-size: 12px; line-height: 1.9; color: var(--text-secondary);">
+                                缓存：Redis · MongoDB · Memcached<br>
+                                搜索引擎：ElasticSearch · Solr<br>
+                                数据库中间件：MyCat · Canal · Sharding-JDBC<br>
+                                任务调度：Quartz · XXL-JOB<br>
+                                配置中心：Nacos · Apollo · Spring Cloud Config<br>
+                                消息队列：Kafka · RabbitMQ · ActiveMQ<br>
+                                分布式事务：Seata · Apache ShardingSphere<br>
+                                协调服务：ZooKeeper · 监控：SkyWalking · Druid
+                            </div>
+                        </div>
+                        <div style="background: #f8f9fa; border-radius: 6px; padding: 12px 14px;">
+                            <div style="font-weight: 700; font-size: 13px; color: var(--primary); margin-bottom: 6px;">数据库系统 (Database)</div>
+                            <div style="font-size: 12px; line-height: 1.9; color: var(--text-secondary);">
+                                关系型数据库：MySQL · Oracle · SQL-Server · SQLite<br>
+                                分布式/国产数据库：TiDB
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+          
+               
+
+            <div class="section">
+                <div class="section-title">项目经验</div>
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">智能学习辅助系统（多智能体协作平台）</div>
+                        <div class="item-date">2025.09 - 2026.01</div>
+                    </div>
+                    <div class="item-subtitle">项目负责人 / 全栈开发工程师 | 技术栈：OpenAgents、FastAPI、Ollama、Python、asyncio、gRPC、ECharts、Prometheus</div>
+                    <div class="item-description">
+                        <ul>
+                            <li>基于 OpenAgents 框架和 Ollama 本地大模型构建多智能体协作教育平台，实现学情分析→资源匹配→练习优化的全流程自动化闭环</li>
+                            <li>设计 3 个核心智能体协作架构，采用事件驱动机制实现智能体间异步通信</li>
+                            <li>基于 FastAPI 构建兼容 OpenAI 接口格式的本地模型服务，支持普通调用和流式响应</li>
+                            <li>实现知识图谱驱动的学情分析算法，自动识别知识缺口并生成个性化学习路径</li>
+                            <li>配置 PeanutHull 内网穿透，实现外部网络访问和 OpenAgents Studio 远程连接</li>
+                        </ul>
+                        <div class="tag-row">
+                            <span class="tag">OpenAgents</span>
+                            <span class="tag">FastAPI</span>
+                            <span class="tag">Ollama</span>
+                            <span class="tag">Python</span>
+                            <span class="tag">asyncio</span>
+                            <span class="tag">gRPC</span>
+                            <span class="tag">ECharts</span>
+                            <span class="tag">Prometheus</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="experience-item">
+                    <div class="item-header">
+                        <div class="item-title">VDB-News · 智能向量资讯平台</div>
+                        <div class="item-date">2026.05</div>
+                    </div>
+                    <div class="item-subtitle">个人全栈项目 | <a href="http://111.228.0.160/" target="_blank" style="color: var(--primary); text-decoration: none;">项目地址</a> | 技术栈：Python / FastAPI / SQLite / ChromaDB / LangChain / OpenAI API / HTML/CSS/JS / Nginx / Docker</div>
+                    <div class="item-description">
+                        <ul>
+                            <li><strong>文档知识库</strong>：支持 .txt/.md/.pdf 拖拽上传，自动分块（1000字符/块）+ 向量化 + ChromaDB 持久化存储，实现多模态文档解析。</li>
+                            <li><strong>AI 对话系统</strong>：基于 RAG 检索增强生成，SSE 流式响应（< 300ms 首字符延迟），支持 20 轮对话记忆与用户兴趣追踪。</li>
+                            <li><strong>用户系统</strong>：邮箱/验证码/GitHub OAuth 多方式登录，Session 鉴权，管理员权限隔离，支持 100+ 用户并发。</li>
+                            <li><strong>管理后台</strong>：用户管理、API 配额控制（预算阈值、用量追踪）、Embedding 管理、充值系统。</li>
+                            <li><strong>响应式布局</strong>：移动端适配，Apple Design 风格 UI，支持 6 种屏幕尺寸自适应。</li>
+                        </ul>
+                        <p style="margin-top: 12px; font-weight: 600; color: var(--primary); font-size: 13px;">
+                            量化成果：日均处理 200+ 资讯流 · 9 个垂直 RSS 源接入 · 单条检索响应 < 500ms · 系统稳定运行 99.9% 可用率</p>
+                        <div class="tag-row">
+                            <span class="tag">RAG</span>
+                            <span class="tag">ChromaDB</span>
+                            <span class="tag">LangChain</span>
+                            <span class="tag">FastAPI</span>
+                            <span class="tag">OpenAI API</span>
+                            <span class="tag">SSE</span>
+                            <span class="tag">OAuth</span>
+                            <span class="tag">Docker</span>
+                            <span class="tag">Nginx</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">个人实践</div>
+                <div class="item-description">
+                    <ul>
+                        <li>独立维护京东云 Ubuntu 服务器，配置防火墙规则与安全组，实现 SSH 密钥认证与 systemd 服务常驻</li>
+                        <li>部署 ChromaDB 向量数据库与 Ollama 本地大模型，搭建完整的 Embedding 推理链路，为向量检索 PoC 提供离线特征化底座</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</body>
+</html>

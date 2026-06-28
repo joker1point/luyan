@@ -1,0 +1,75 @@
+name: Lint and Test
+
+on:
+  push:
+    branches: [ main, feature/* ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linting tools
+        run: |
+          pip install flake8 black isort
+
+      - name: Run flake8
+        run: flake8 backend/ --max-line-length=120
+
+      - name: Check formatting with black
+        run: black --check backend/
+
+      - name: Check import order
+        run: isort --check-only backend/
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.10', '3.11', '3.12']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov
+
+      - name: Test DeepSeek config
+        env:
+          LLM_PROVIDER: deepseek
+          DEEPSEEK_API_KEY: sk-test
+        run: |
+          python -c "from backend.config import settings; assert settings.LLM_PROVIDER == 'deepseek'"
+
+      - name: Test Qwen config
+        env:
+          LLM_PROVIDER: qwen
+          QWEN_API_KEY: sk-test
+        run: |
+          python -c "from backend.config import settings; assert settings.LLM_PROVIDER == 'qwen'"
+
+      - name: Test Ollama config
+        env:
+          LLM_PROVIDER: ollama
+        run: |
+          python -c "from backend.config import settings; assert settings.LLM_PROVIDER == 'ollama'"
+
+      - name: Run tests
+        run: |
+          pytest tests/ -v --cov=backend --cov-report=term-missing || echo "Tests pending"

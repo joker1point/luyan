@@ -1,0 +1,368 @@
+/**
+ * 全局样式（CSS Variables + Reset + 通用工具类）
+ *
+ * 设计语言：参考 SonettoHere —— 极简、中性、留白
+ *   - 浅色：纯白底 + 极浅灰边框 + 极轻阴影
+ *   - 暗色：深炭黑底 + 微妙分层 + 状态点保留品牌色
+ *   - 强调色：纯黑（light）/ 纯白（dark），与 SonettoHere 一致
+ *   - 状态色仅在 chip / dot 上使用，UI 以中性灰为主
+ *   - 圆角 10px（卡片）/ 14px（大圆角卡片）
+ */
+
+/* ==================== 浅色主题（默认）=================== */
+:root,
+[data-theme="light"] {
+  /* 基础中性色 */
+  --bg: #ffffff;
+  --bg-card: #ffffff;
+  --bg-soft: #f9fafb;
+  --bg-hover: #f3f4f6;
+  --bg-active: #f3f4f6;
+
+  /* 文本 */
+  --text: #1f2937;
+  --text-secondary: #6b7280;
+  --text-tertiary: #9ca3af;
+  --text-inverse: #ffffff;
+
+  /* 边框与分隔 */
+  --border: #e5e7eb;
+  --border-strong: #d1d5db;
+  --divider: #f3f4f6;
+
+  /* 强调（accent）—— 浅色用纯黑 */
+  --accent: #000000;
+  --accent-hover: #1f2937;
+  --accent-text: #ffffff;
+  --accent-soft: #f3f4f6;
+  --accent-glow: rgba(0, 0, 0, 0.08);
+
+  /* 状态色（仅用于 chip / dot / 进度） */
+  --success: #10b981;
+  --success-soft: #d1fae5;
+  --warning: #f59e0b;
+  --warning-soft: #fef3c7;
+  --danger: #ef4444;
+  --danger-soft: #fee2e2;
+  --info: #3b82f6;
+  --info-soft: #dbeafe;
+
+  /* 时段色（事件卡片左侧 rail） */
+  --period-morning: #f59e0b;
+  --period-afternoon: #3b82f6;
+  --period-evening: #8b5cf6;
+  --period-night: #1f2937;
+
+  /* 阴影：与 SonettoHere 5 级对齐 */
+  --shadow-xs: 0 1px 3px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.06);
+  --shadow:    0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 6px 28px rgba(0, 0, 0, 0.18);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.06);
+
+  /* 圆角 */
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  /* 字体 */
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-mono: "SF Mono", "Consolas", "Monaco", "Cascadia Code", monospace;
+
+  /* 选区 */
+  --selection-bg: rgba(0, 0, 0, 0.1);
+  --selection-fg: #000000;
+
+  color-scheme: light;
+}
+
+/* ==================== 深色主题 =================== */
+[data-theme="dark"] {
+  /* 基础中性色（避免纯黑背景，采用炭灰做分层） */
+  --bg: #0d0f12;
+  --bg-card: #15181d;
+  --bg-soft: #1b1f25;
+  --bg-hover: #232830;
+  --bg-active: #232830;
+
+  /* 文本：主白，次灰 */
+  --text: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-tertiary: #6b7280;
+  --text-inverse: #0d0f12;
+
+  /* 边框：微妙分层 */
+  --border: #232830;
+  --border-strong: #2f343d;
+  --divider: #1b1f25;
+
+  /* 强调 —— 暗色用纯白（与 SonettoHere 极简一致）*/
+  --accent: #ffffff;
+  --accent-hover: #f3f4f6;
+  --accent-text: #0d0f12;
+  --accent-soft: #232830;
+  --accent-glow: rgba(255, 255, 255, 0.12);
+
+  /* 状态色（保留品牌识别） */
+  --success: #34d399;
+  --success-soft: rgba(52, 211, 153, 0.15);
+  --warning: #fbbf24;
+  --warning-soft: rgba(251, 191, 36, 0.15);
+  --danger: #f87171;
+  --danger-soft: rgba(248, 113, 113, 0.15);
+  --info: #60a5fa;
+  --info-soft: rgba(96, 165, 250, 0.15);
+
+  /* 时段色：暗色下提亮 */
+  --period-morning: #fbbf24;
+  --period-afternoon: #60a5fa;
+  --period-evening: #a78bfa;
+  --period-night: #475569;
+
+  /* 阴影：暗色下纯黑阴影几乎不可见，改用「外发光」+ 微弱阴影 */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
+  --shadow:    0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 6px 28px rgba(0, 0, 0, 0.6);
+  --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+  /* 选区 */
+  --selection-bg: rgba(255, 255, 255, 0.2);
+  --selection-fg: #ffffff;
+
+  color-scheme: dark;
+}
+
+/* ==================== Reset =================== */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 4px;
+}
+*::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* ==================== 通用组件（共享 light + dark）=================== */
+
+/* 通用按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.05s;
+  user-select: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.btn:active { transform: translateY(1px); }
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+.btn-primary:hover:not(:disabled) { background: var(--accent-hover); }
+.btn-ghost {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-ghost:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { background: var(--danger); filter: brightness(0.9); }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* 通用卡片 */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow-xs);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* 通用输入 */
+.input, .textarea, .select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  color: var(--text);
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.2s ease;
+}
+.input::placeholder, .textarea::placeholder {
+  color: var(--text-tertiary);
+}
+.input:focus, .textarea:focus, .select:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+  line-height: 1.6;
+}
+
+/* 通用 chip / 标签 —— 自动适应主题 */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  background: var(--bg-soft);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.chip-accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: transparent;
+  font-weight: 500;
+}
+.chip-success { background: var(--success-soft); color: var(--success); border-color: transparent; }
+.chip-warning { background: var(--warning-soft); color: var(--warning); border-color: transparent; }
+.chip-danger  { background: var(--danger-soft);  color: var(--danger);  border-color: transparent; }
+.chip-info    { background: var(--info-soft);    color: var(--info);    border-color: transparent; }
+
+/* 进度条 */
+.progress {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-soft);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.progress > .bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: var(--radius-pill);
+  transition: width 0.3s ease, background-color 0.2s ease;
+}
+
+/* 错误条 */
+.alert {
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.alert-error { background: var(--danger-soft); color: var(--danger); }
+.alert-success { background: var(--success-soft); color: var(--success); }
+.alert-info { background: var(--info-soft); color: var(--info); }
+
+/* 空状态 */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: var(--text-tertiary);
+  text-align: center;
+  gap: 8px;
+}
+
+/* 标题 */
+.h1 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.2px; }
+.h2 { font-size: 18px; font-weight: 600; color: var(--text); letter-spacing: -0.1px; }
+.h3 { font-size: 15px; font-weight: 600; color: var(--text); }
+.muted { color: var(--text-secondary); }
+.tiny  { font-size: 12px; color: var(--text-tertiary); }
+
+/* flex 工具 */
+.row { display: flex; align-items: center; gap: 10px; }
+.col { display: flex; flex-direction: column; gap: 10px; }
+.spacer { flex: 1; }
+
+/* 主题切换时的全局过渡 */
+.card, .input, .textarea, .select, button, .chip, .progress,
+.sidebar, .session-panel, .chat-header, .bubble, .event-card, .day-block,
+.day-header, .state-row, .personality-row, .meta-row, .provider-item,
+.test-result, .section-body, .memory-item, .conv-item, .growth-item {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* fade transition */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }

@@ -1,0 +1,55 @@
+你是一个角色创建助手。根据用户描述，生成一个完整的角色设定，包括所属世界的结构化定义。
+
+用户描述：{user_description}
+
+请生成以下信息（严格的JSON格式）：
+1. "name" - 角色名称（字符串）
+2. "world_setting" - 世界设定（200字以内的文本，概述角色所处的世界背景）
+3. "world_name" - 世界名称（字符串，如"艾泽拉斯"、"北境雪原"等，为该世界的唯一标识名）
+4. "core_worldview" - 核心世界观（字符串，100字以内，精炼描述这个世界的核心法则，如"魔法与科技并存的蒸汽朋克世界"、"剑与魔法的传统奇幻大陆"）
+5. "scenes" - 场景树（JSON 数组，至少包含 1 个概念场景 + 1 个实际场景）。
+    概念场景：描述世界的地理/区域框架（如大陆、王国、城镇），支持嵌套（parent_scene_id 指向父概念场景）
+    实际场景：角色可身处其中的具体地点（如酒馆、森林、宫殿），parent_scene_id 必须指向一个概念场景
+    每条场景是 JSON 对象，包含：
+      - "name": 场景名称（字符串）
+      - "scene_layer": "conceptual"（概念场景）或 "actual"（实际场景）
+      - "scene_type": 场景类型（字符串，如 continent/kingdom/town/tavern/cave/palace/forest/market 等）
+      - "parent_index": 父场景在 scenes 数组中的索引（0-based），根概念场景填 -1
+      - "description": 场景描述（字符串，1-2句话描述该场景的外观与氛围）
+    注意：scenes 数组的第一条应为根概念场景（parent_index=-1），实际场景的 parent_index 应指向某个概念场景
+6. "personality" - 人格属性（JSON对象，包含以下属性，值域0-100）：
+   - optimism: 乐观度
+   - courage: 勇气
+   - empathy: 同理心
+   - loyalty: 忠诚度
+   - intelligence: 智力
+   - sociability: 社交性
+7. "initial_memories" - 初始记忆（数组，每个记忆是包含"content"和"importance"的对象，importance值域1-10）
+8. "current_state" - 当前状态（JSON对象，包含：
+   - "location": 当前位置
+   - "activity": 当前活动
+   - "mood": 当前心情
+9. "speaking_style" - 说话风格（JSON字符串数组，描述角色说话的特点，如["语速缓慢", "喜欢用比喻"]，至少1条）
+10. "values" - 核心信念（JSON字符串数组，描述角色坚守的价值观，如["重视友情", "热爱自然"]，至少1条）
+11. "habits" - 日常习惯（JSON字符串数组，描述角色的日常行为习惯，如["清晨练剑", "睡前读书"]，至少1条）
+12. "long_term_goal" - 长期目标（字符串，描述角色内心深处的追求，如"找到失散多年的妹妹"或"成为天下第一剑客"）
+13. "day1_schedule" - 角色第一天的日程安排（JSON 数组，3-5 条事件，按时间顺序排列）。每条事件是 JSON 对象，包含：
+    - "content": 事件描述
+    - "event_type": 事件类型，仅限以下值之一："schedule_action"（日程行动）、"scene_event"（场景事件）、"character_initiative"（角色主动行为）、"player_dialogue"（玩家对话）
+    - "time_period": 时间段，仅限以下值之一："morning"（早晨）、"afternoon"（下午）、"evening"（傍晚）、"night"（夜晚）
+    - "order_index": 排序序号，从 1 开始递增
+注意：day1_schedule 应与角色设定、长期目标保持一致，事件类型不得超出上述白名单，时间段不得超出上述白名单。
+14. "short_term_goals" - 基于 long_term_goal 分解的 2-3 条短期可执行目标（JSON 数组，作为长期目标与日程之间的桥梁）。每条是 JSON 对象，包含：
+    - "goal": 目标描述（字符串，具体可执行，如"找到一位剑术大师指点"）
+    - "progress": 初始进度（浮点数，初始填 0.0）
+    - "created_day": 创建于第几天（整数，初始填 1）
+    - "source": 来源标记（字符串，初始固定填 "creation"）
+注意：每条约 1-2 周可完成，必须直接驱动 day1_schedule 中的某条事件。至少输出 1 条。
+
+重要要求：
+- 输出必须是严格的JSON格式
+- 不要包含```json```标记
+- 不要包含任何解释性文字
+- 确保所有字符串使用双引号
+- speaking_style/values/habits 至少各包含 1 条
+- scenes 数组中至少包含 1 个概念场景 + 1 个实际场景，概念场景描述世界结构，实际场景是角色当前的所在位置

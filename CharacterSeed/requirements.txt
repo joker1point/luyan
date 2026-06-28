@@ -1,0 +1,19 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.23
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+openai>=1.30.0
+httpx<0.28.0  # openai 内部传 proxies 参数，httpx 0.28+ 已移除该参数
+requests==2.31.0
+python-multipart==0.0.6
+aiofiles==23.2.1
+
+# 记忆系统
+# 短期记忆使用纯 Python 实现（deque），无需 LangChain
+# 如需使用 LangChain 高级功能，可取消注释：
+# langchain>=0.2.0
+# langchain-community>=0.2.0
+mem0ai>=0.1.0
+cognee>=0.1.0

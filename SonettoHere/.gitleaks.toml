@@ -1,0 +1,17 @@
+# Gitleaks 配置 — SonettoHere
+# 自定义规则与白名单，减少误报。
+
+[allowlist]
+  # 测试/示例数据，非真实凭证
+  paths = [
+    # 测试文件中包含示例 API key 是安全的
+    '''tests/fixtures/.*''',
+    '''__tests__/.*''',
+  ]
+
+  # 已知的误报正则（匹配特定上下文的 "secret" 类字符串）
+  regexes = [
+    # LangChain/LangGraph 中 "secret" 作为变量名而非凭证
+    '''(?i)example.*secret''',
+    '''(?i)placeholder.*key''',
+  ]

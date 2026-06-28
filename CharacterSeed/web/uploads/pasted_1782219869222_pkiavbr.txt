@@ -1,0 +1,628 @@
+toolName: no_need_execute
+            
+status: no_need_execute
+          
+          
+
+        
+            
+toolName: view_folder
+            
+status: success
+          
+c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed
+          
+
+        
+            
+toolName: view_folder
+            
+status: success
+          
+c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\package.json
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\vite.config.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\main.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\App.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\api\index.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\types\index.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\router\index.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\composables\useChat.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\composables\useCharacters.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\composables\useTheme.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\composables\useCharacterDetail.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\composables\useEvents.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\composables\useSessions.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\ChatView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\CreateView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\SettingsView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\EventsView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\StatusView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\utils\index.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\tsconfig.json
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\style.css
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\index.html
+          
+
+        
+            
+toolName: view_folder
+            
+status: success
+          
+c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\backend\api
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\backend\main.py
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\EventsView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\views\StatusView.vue
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\env.d.ts
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\tsconfig.node.json
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\web\src\style.css
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\.env.example
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\README.md
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\README.md
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: @app\.(get|post|put|delete|patch)
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: event|thinking|speech|meta|cache_hit
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: event/advance|time/iterate|time/auto
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: advance|iterate|@app\.post.*event|@app\.post.*time
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: advance|iterate|auto|TimeModule
+          
+
+        
+            
+toolName: search_by_regex
+            
+status: success
+          
+query: /event/advance|/time/iterate|/time/auto|advance_request|IterateRequest|AdvanceRequest|AutoResponse
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\backend\api\__init__.py
+          
+
+        
+            
+toolName: view_files
+            
+status: success
+          
+            
+filePath: c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed\backend\api\memory_router.py
+          
+
+        
+            
+toolName: view_folder
+            
+status: success
+          
+c:\Users\biren\Documents\trae_projects\luyan\CharacterSeed
+          
+# 📋 CharacterSeed 前端关键文件清单（新同事入门指南）
+
+> ⚠️ **重要提示**：你提到的 `frontend_web` 目录在当前仓库**不存在**，实际前端项目位于 `CharacterSeed/web/` 目录（Vue 3 + Vite + TS，端口 5173）。本清单基于实际项目结构整理。
+
+---
+
+## 🚨 优先级 0：必须先读（决定项目能否跑起来）
+
+| # | 文件路径 | 作用 |
+|---|---------|------|
+| 1 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/README.md` | 项目整体介绍、启动方式、技术栈；新同事**第一份必读** |
+| 2 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/.env.example` | 环境变量模板（LLM Provider / API Key / DB） |
+| 3 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/package.json` | 前端依赖清单：`vue@3.4` + `vue-router@4.3` + `vite@5.2` + `typescript@5.4` + `playwright`（**没有 Pinia、没有 axios、没有 UI 库**） |
+| 4 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/vite.config.ts` | Vite 配置：端口 5173、`@/*` 路径别名、SSE 代理配置（**注意开发模式直连 8000，绕过 Vite 代理**） |
+| 5 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/index.html` | HTML 入口；含 FOUC 防御脚本（**在 CSS 加载前同步设置 `data-theme`**） |
+| 6 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/main.ts` | Vue 应用入口：注册 useTheme 防闪屏 → createApp → mount |
+| 7 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/App.vue` | 根布局：侧边栏（角色列表 + 导航 + 主题切换 + 后端心跳） + `<router-view>` |
+
+---
+
+## 🔴 优先级 1：API 契约层（与后端交互的核心）
+
+| # | 文件路径 | 作用 |
+|---|---------|------|
+| 8 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/api/index.ts` | **前端 API 客户端唯一入口**。覆盖 26 个端点，按模块拆为 `characters / chat / sessions / growth / events / memory / llmSettings / testTools / system`。**特别要看 `chat.streamSend`**：手动用 `fetch + ReadableStream` 解析 SSE（不是 EventSource，因为要支持 POST）。 |
+| 9 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/types/index.ts` | **TypeScript 类型定义**，与后端 `backend/schemas.py` 1:1 对应。包含 `Character / ChatRequest / ChatResponse / EventResponse / GrowthResponse / LLMSettingsResponse` 等所有请求/响应类型。 |
+| 10 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/router/index.ts` | Vue Router 配置：5 个路由（`/create` `/chat` `/events` `/status` `/settings`），懒加载 views，根路径重定向到 `/chat` |
+
+---
+
+## 🟠 优先级 2：状态管理层（Composables 代替 Pinia）
+
+> 项目**未使用 Pinia**，而是用 6 个模块级 `ref` 单例的 composable 做状态管理。
+
+| # | 文件路径 | 作用 |
+|---|---------|------|
+| 11 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useChat.ts` | **聊天核心**：维护 `messages` 列表、`sessionId`，调用 `chat.streamSend`；4 个回调（onThinking/onMeta/onSpeech/onDone）实现 thinking 阶段提示 + 打字机效果 + 占位消息替换。**必读** |
+| 12 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useCharacters.ts` | 角色列表 + 当前选中角色（持久化到 `localStorage: cs.activeCharacterId`），提供 `refresh / setActive / remove` |
+| 13 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useSessions.ts` | 会话列表管理（按角色）；`createNew / select / rename / remove / loadDetail` |
+| 14 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useEvents.ts` | 事件推进：按 day 分组、推进单个 / 迭代下一天 / 一键推演（auto） |
+| 15 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useCharacterDetail.ts` | 状态面板数据：角色 + 6 维人格 + 记忆 + 对话 + 成长日志，监听 `activeId` 自动重载 |
+| 16 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useTheme.ts` | 主题管理：light/dark/auto 三态，跟随 OS 偏好，持久化到 `cs.theme`，**模块加载即初始化（防 FOUC）** |
+
+---
+
+## 🟡 优先级 3：核心视图组件（每个页面 1 个文件）
+
+| # | 文件路径 | 作用 |
+|---|---------|------|
+| 17 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/ChatView.vue` | **聊天页（最复杂）**：左侧会话列表 + 右侧聊天气泡 + 输入框；显示 thinking 占位 + Director/Actor 原始响应（可展开调试） |
+| 18 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/CreateView.vue` | 角色创建：文本/TXT 双 tab，6 维人格进度条可视化，创建成功后跳转到 `/chat` |
+| 19 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/SettingsView.vue` | LLM 设置：provider 切换 + api_key/base_url/model 编辑 + 测试连接 + 延迟测试 + 拉取模型列表 |
+| 20 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/EventsView.vue` | 事件推进：按 day 分组的时间线，pending/active/completed 状态着色 |
+| 21 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/StatusView.vue` | 角色状态面板：6 维人格 + 记忆（按类型筛选）+ 对话历史 + 成长记录 |
+
+---
+
+## 🟢 优先级 4：工具与样式
+
+| # | 文件路径 | 作用 |
+|---|---------|------|
+| 22 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/utils/index.ts` | 工具函数：`safeJsonParse`（后端把 dict 序列化成 JSON 字符串，前端要解析）/ `formatDate` / `formatRelative` / `timePeriodLabel` / 简易 Markdown 渲染 |
+| 23 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/style.css` | **全局样式（CSS Variables + 通用类）**：浅色/暗色主题变量、`.btn` `.card` `.input` `.chip` 通用组件样式、SonettoHere 设计语言 |
+| 24 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/env.d.ts` | TypeScript 环境声明（Vite + .vue 文件） |
+| 25 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/tsconfig.json` | TS 配置：路径别名 `@/* → src/*` |
+| 26 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/tsconfig.node.json` | TS Node 配置（仅用于 vite.config.ts） |
+
+---
+
+## 🔧 优先级 5：后端 API 契约（前端要知道后端提供了什么）
+
+> 重点是 `backend/main.py`（FastAPI 入口 + 28 个路由）和 `backend/schemas.py`（Pydantic 数据模型）。
+
+| # | 文件路径 | 作用 |
+|---|---------|------|
+| 27 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/main.py` | **FastAPI 入口**：28 个路由的源头（角色 CRUD、对话流式 SSE、session 管理、LLM 设置、性能监控、API 测试）。**重点看 `/api/chat/stream` 的 SSE 事件格式**（`thinking / meta / speech / done / error`） |
+| 28 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/schemas.py` | Pydantic 模型定义，前端 `types/index.ts` 的真值来源 |
+| 29 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/modules/interaction.py` | **Director + Actor 双管线实现**，理解 `run_stream` 怎么产出 SSE 事件（`thinking → meta → speech* → done`） |
+| 30 | `file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/api/memory_router.py` | 增强版记忆管理 API（前端**当前未使用**，预留能力） |
+
+---
+
+## 🔑 关键交互流程：发送消息→流式接收→显示
+
+涉及文件按调用顺序：
+
+1. **用户操作**：`web/src/views/ChatView.vue` 的 `<textarea>` + `onSend()` 
+2. **业务编排**：`web/src/composables/useChat.ts` 的 `send()`（插入 user 消息 + 占位 assistant 消息）
+3. **API 调用**：`web/src/api/index.ts` 的 `chat.streamSend()`（`fetch + ReadableStream` 解析 SSE）
+4. **后端管线**：`backend/main.py` 的 `/api/chat/stream` → `backend/modules/interaction.py` 的 `run_stream()`
+5. **事件回调**：
+   - `thinking` → 更新占位消息的 `thinking_phase` + `thinking_message`
+   - `meta` → 写入 `sessionId` + `sessionTitle` + 提前显示 emotion
+   - `speech` → 增量追加到占位 `content`（打字机）
+   - `done` → 移除占位，替换为完整 `ChatResponse`
+6. **持久化**：用户选中角色保存在 `localStorage: cs.activeCharacterId`
+
+---
+
+## ⚠️ 发现的问题（建议同步给新同事）
+
+| 问题 | 位置 | 说明 |
+|------|------|------|
+| 🚧 **API 客户端引用了后端未实现的端点** | `web/src/api/index.ts` 的 `events.advance / events.iterate / events.auto` | 前端定义了 `/api/event/advance`、`/api/time/iterate`、`/api/time/auto`，但 `backend/main.py` 中**没有这些路由**。调用会返回 404。可能是未完成的开发任务。 |
+| 📖 **README 过期** | `CharacterSeed/README.md` | 未列出会话、事件推进、性能监控等 API；前端启动方式写的是 `web/`（正确）但描述偏旧 |
+| 📂 **前端目录是 `web/` 而非 `frontend_web`** | — | 你提到的是 `frontend_web`，但实际仓库只有 `web/`，请确认是否记错或是有未提交的目录 |
+| 🧰 **无 Pinia / Vuex / UI 库** | — | 状态管理用模块级 `ref` 单例的 composables；UI 组件全部自实现（CSS 变量 + 通用类） |
+
+---
+
+## 📖 推荐阅读顺序（30 分钟上手）
+
+1. `README.md` （3 min）
+2. `web/package.json` + `web/vite.config.ts` + `web/src/main.ts` （3 min）
+3. `web/src/types/index.ts` （5 min）- 数据形状
+4. `web/src/api/index.ts` （10 min，重点看 `streamSend`）
+5. `web/src/composables/useChat.ts` + `web/src/views/ChatView.vue` （8 min）- 核心流程
+6. `backend/main.py` 的路由列表 + `/api/chat/stream` 注释（5 min）
+
+如果时间充裕，再读 `web/src/router/index.ts` + 其他 4 个 view 文件 + 4 个 composable。
+        
+          
+# 新同事实现前端 - 文件清单
+
+> ⚠️ **修正**：前端目录实际是 `web/`，不是 `frontend_web/`。前端运行在 5173 端口（Vite + Vue 3 + TS）。
+
+---
+
+## 🔴 P0：必读（决定能否跑起来）
+
+| 文件 | 作用 |
+|---|---|
+| [README.md](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/README.md) | 整体介绍 + 启动方式 |
+| [.env.example](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/.env.example) | 环境变量模板 |
+| [web/package.json](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/package.json) | 依赖：`vue@3.4` + `vue-router@4.3` + `vite@5.2` + `typescript@5.4` (**无 Pinia / 无 axios / 无 UI 库**) |
+| [web/vite.config.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/vite.config.ts) | 端口 5173、@别名、SSE 代理 |
+| [web/src/main.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/main.ts) | Vue 入口（useTheme 防闪屏） |
+| [web/src/App.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/App.vue) | 根布局：侧边栏 + `<router-view>` |
+
+## 🟠 P1：API 契约层（与后端对接）
+
+| 文件 | 作用 |
+|---|---|
+| [web/src/api/index.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/api/index.ts) | **API 客户端唯一入口**，26 个端点；重点看 `chat.streamSend`（手写 `fetch + ReadableStream` 解析 SSE，因为是 POST） |
+| [web/src/types/index.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/types/index.ts) | TS 类型，与 `backend/schemas.py` 1:1 |
+| [web/src/router/index.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/router/index.ts) | 5 个路由（`/create /chat /events /status /settings`），根路径 → `/chat` |
+
+## 🟡 P2：状态管理（6 个 composable 代替 Pinia）
+
+| 文件 | 作用 |
+|---|---|
+| [web/src/composables/useChat.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useChat.ts) | **核心**：`messages` + `sessionId` + 4 个回调（onThinking/onMeta/onSpeech/onDone） |
+| [web/src/composables/useCharacters.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useCharacters.ts) | 角色列表 + 当前选中（localStorage: `cs.activeCharacterId`） |
+| [web/src/composables/useSessions.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useSessions.ts) | 会话管理 |
+| [web/src/composables/useEvents.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useEvents.ts) | 事件推进（day 分组） |
+| [web/src/composables/useCharacterDetail.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useCharacterDetail.ts) | 状态面板（6 维人格 + 记忆 + 对话 + 成长） |
+| [web/src/composables/useTheme.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useTheme.ts) | 主题（light/dark/auto），模块加载即初始化防 FOUC |
+
+## 🟢 P3：视图组件（5 个页面）
+
+| 文件 | 作用 |
+|---|---|
+| [web/src/views/ChatView.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/ChatView.vue) | **最复杂**：会话列表 + 气泡 + thinking 占位 + 打字机 |
+| [web/src/views/CreateView.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/CreateView.vue) | 角色创建（文本/TXT 双 tab，6 维人格进度条） |
+| [web/src/views/SettingsView.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/SettingsView.vue) | LLM 设置（provider + api_key + 测试 + 拉模型列表） |
+| [web/src/views/EventsView.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/EventsView.vue) | 事件时间线 |
+| [web/src/views/StatusView.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/StatusView.vue) | 状态面板 |
+
+## 🔵 P4：工具 & 样式
+
+| 文件 | 作用 |
+|---|---|
+| [web/src/utils/index.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/utils/index.ts) | `safeJsonParse`（后端把 dict 序列化为 JSON 字符串）/ 时间格式化 / 简易 Markdown |
+| [web/src/style.css](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/style.css) | 全局 CSS 变量 + 浅/暗主题 + `.btn .card .input .chip` 通用类 |
+| [web/src/env.d.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/env.d.ts) + [tsconfig.json](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/tsconfig.json) | TS 环境声明 + 路径别名 |
+
+## ⚙️ P5：后端契约（前端必须知道）
+
+| 文件 | 作用 |
+|---|---|
+| [backend/main.py](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/main.py) | FastAPI 入口，28 个路由；**重点看 `/api/chat/stream` 的 SSE 事件格式**（`thinking / meta / speech / done / error`） |
+| [backend/schemas.py](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/schemas.py) | Pydantic 模型，前端 `types/index.ts` 真值来源 |
+| [backend/modules/interaction.py](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/modules/interaction.py) | Director + Actor 双管线，理解 `run_stream` 怎么产出 SSE |
+
+---
+
+## 🔑 关键交互流程（送消息 → 显示）
+
+1. **用户输入** → [ChatView.vue](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/views/ChatView.vue) `onSend()`
+2. **业务编排** → [useChat.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/composables/useChat.ts) `send()`（插入 user 消息 + 占位 assistant）
+3. **API 调用** → [api/index.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/api/index.ts) `chat.streamSend()`（`fetch + ReadableStream`）
+4. **后端管线** → [main.py](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/main.py) `/api/chat/stream` → [interaction.py](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/modules/interaction.py) `run_stream()`
+5. **事件回调**：`thinking` → 占位文案，`meta` → sessionId+emotion，`speech` → 增量追加（打字机），`done` → 替换占位
+
+## 🚨 同步告知新同事的 3 个问题
+
+1. **API 客户端引用了后端未实现的端点**：[api/index.ts](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/web/src/api/index.ts) 的 `events.advance / iterate / auto` 调用 `/api/event/advance`、`/api/time/iterate`、`/api/time/auto`，但 [main.py](file:///c:/Users/biren/Documents/trae_projects/luyan/CharacterSeed/backend/main.py) 中**没有这些路由**（会 404）
+2. **README 过期**：未列出会话、事件、性能监控等 API
+3. **架构特点**：无 Pinia（用 composable + 模块级 ref 单例）、无 UI 库（全部自实现 CSS）
+
+---
+
+**30 分钟上手推荐顺序**：README → package.json+vite.config+main.ts → types/index.ts → api/index.ts（重点 `streamSend`）→ useChat.ts+ChatView.vue → backend/main.py 路由表

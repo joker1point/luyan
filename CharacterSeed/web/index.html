@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CharacterSeed — AI 数字生命</title>
+    <script>
+      // FOUC 防御：在 CSS 加载前提前把 data-theme 写到 <html>
+      // 同步逻辑复制自 src/composables/useTheme.ts（避免样式闪动）
+      (function () {
+        try {
+          var stored = localStorage.getItem('cs.theme')
+          var mode = (stored === 'light' || stored === 'dark' || stored === 'auto') ? stored : 'auto'
+          var resolved = mode
+          if (mode === 'auto') {
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+          }
+          document.documentElement.setAttribute('data-theme', resolved)
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'light')
+        }
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

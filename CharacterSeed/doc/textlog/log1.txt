@@ -1,0 +1,193 @@
+============================================================
+测试 Creation Module
+============================================================
+
+测试 1: 落魄贵族少女，擅长剑术，性格坚毅
+------------------------------------------------------------
+❌ 测试失败: Client.__init__() got an unexpected keyword argument 'proxies'
+Traceback (most recent call last):
+  File "D:\Desktop\CharacterSeed\test_creation.py", line 34, in test_creation_pipeline
+    module = CreationModule()
+             ^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\backend\modules\creation.py", line 10, in __init__
+    self.llm_service = LLMService()
+                       ^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\backend\services\llm_service.py", line 10, in __init__
+    self.client = OpenAI(
+                  ^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\openai\_client.py", line 107, in __init__       
+    super().__init__(
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\openai\_base_client.py", line 738, in __init__  
+    self._client = http_client or httpx.Client(
+                                  ^^^^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+
+测试 2: 一个快乐的酒馆老板，喜欢听客人讲故事
+------------------------------------------------------------
+❌ 测试失败: Client.__init__() got an unexpected keyword argument 'proxies'
+Traceback (most recent call last):
+  File "D:\Desktop\CharacterSeed\test_creation.py", line 34, in test_creation_pipeline
+    module = CreationModule()
+             ^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\backend\modules\creation.py", line 10, in __init__
+    self.llm_service = LLMService()
+                       ^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\backend\services\llm_service.py", line 10, in __init__
+    self.client = OpenAI(
+                  ^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\openai\_client.py", line 107, in __init__       
+    super().__init__(
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\openai\_base_client.py", line 738, in __init__  
+    self._client = http_client or httpx.Client(
+                                  ^^^^^^^^^^^^^
+TypeError: Client.__init__() got an unexpected keyword argument 'proxies'
+
+============================================================
+测试完成！
+============================================================
+INFO:     Will watch for changes in these directories: ['D:\\Desktop\\CharacterSeed']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [27408] using StatReload
+Process SpawnProcess-1:
+Traceback (most recent call last):
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3292, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 452, in connect  
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1269, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 716, in checkout 
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 169, in _do_get  
+    with util.safe_reraise():
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 167, in _do_get  
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 393, in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 678, in __init__ 
+    self.__connect()
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 902, in __connect
+    with util.safe_reraise():
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 898, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\create.py", line 637, in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 616, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.OperationalError: unable to open database file
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\multiprocessing\process.py", line 314, in _bootstrap
+    self.run()
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\multiprocessing\process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\uvicorn\_subprocess.py", line 76, in subprocess_started
+    target(sockets=sockets)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\uvicorn\server.py", line 61, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\asyncio\base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\uvicorn\server.py", line 68, in serve
+    config.load()
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\uvicorn\config.py", line 467, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\uvicorn\importer.py", line 21, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\importlib\__init__.py", line 126, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+  File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+  File "D:\Desktop\CharacterSeed\backend\main.py", line 17, in <module>
+    Base.metadata.create_all(bind=engine)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\sql\schema.py", line 5828, in create_all
+    bind._run_ddl_visitor(
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3242, in _run_ddl_visitor
+    with self.begin() as conn:
+  File "C:\Users\start20240623\AppData\Roaming\uv\python\cpython-3.11-windows-x86_64-none\Lib\contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3232, in begin 
+    with self.connect() as conn:
+         ^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3268, in connect
+    return self._connection_cls(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 147, in __init__
+    Connection._handle_dbapi_exception_noconnection(
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 2430, in _handle_dbapi_exception_noconnection
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 145, in __init__
+    self._dbapi_connection = engine.raw_connection()
+                             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\base.py", line 3292, in raw_connection
+    return self.pool.connect()
+           ^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 452, in connect  
+    return _ConnectionFairy._checkout(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 1269, in _checkout
+    fairy = _ConnectionRecord.checkout(pool)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 716, in checkout 
+    rec = pool._do_get()
+          ^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 169, in _do_get  
+    with util.safe_reraise():
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\impl.py", line 167, in _do_get  
+    return self._create_connection()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 393, in _create_connection
+    return _ConnectionRecord(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 678, in __init__
+    self.__connect()
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 902, in __connect
+    with util.safe_reraise():
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\util\langhelpers.py", line 146, in __exit__
+    raise exc_value.with_traceback(exc_tb)
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\pool\base.py", line 898, in __connect
+    self.dbapi_connection = connection = pool._invoke_creator(self)
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\create.py", line 637, in connect
+    return dialect.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Desktop\CharacterSeed\.venv\Lib\site-packages\sqlalchemy\engine\default.py", line 616, in connect
+    return self.loaded_dbapi.connect(*cargs, **cparams)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlalchemy.exc.OperationalError: (sqlite3.OperationalError) unable to open database file
+(Background on this error at: https://sqlalche.me/e/20/e3q8)

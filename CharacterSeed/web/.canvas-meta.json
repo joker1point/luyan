@@ -1,0 +1,68 @@
+{
+  "designSystemApproved": false,
+  "activePage": "index.html",
+  "version": 1,
+  "createdAt": "2026-06-23T14:27:50.259Z",
+  "updatedAt": "2026-06-23T14:28:14.287Z",
+  "frames": [
+    {
+      "id": "characterseed-v2-0",
+      "kind": "localhost",
+      "title": "CharacterSeed v2.0",
+      "url": "http://127.0.0.1:5173/",
+      "designUrl": "http://127.0.0.1:5173/",
+      "previewUrl": "http://127.0.0.1:5173/",
+      "code": {
+        "root": "react-vite",
+        "files": [
+          {
+            "path": "react-vite/src/App.jsx",
+            "role": "entry"
+          },
+          {
+            "path": "react-vite/src/pages/ChatPage.jsx",
+            "role": "route"
+          },
+          {
+            "path": "react-vite/src/pages/CreatePage.jsx",
+            "role": "route"
+          },
+          {
+            "path": "react-vite/src/styles.css",
+            "role": "style"
+          },
+          {
+            "path": "react-vite/src/components/ChatBubble.jsx",
+            "role": "component"
+          },
+          {
+            "path": "react-vite/src/components/SessionPanel.jsx",
+            "role": "component"
+          },
+          {
+            "path": "react-vite/src/components/PersonalityRadar.jsx",
+            "role": "component"
+          },
+          {
+            "path": "react-vite/package.json",
+            "role": "config"
+          }
+        ],
+        "devServer": {
+          "command": "npx vite --host 127.0.0.1 --port 5173",
+          "port": 5173,
+          "url": "http://127.0.0.1:5173/"
+        }
+      },
+      "x": 0,
+      "y": 0,
+      "width": 1440,
+      "height": 900,
+      "status": "active",
+      "source": "imported",
+      "createdAt": "2026-06-23T14:28:14.286Z",
+      "updatedAt": "2026-06-23T14:28:14.286Z"
+    }
+  ],
+  "activeFrameId": "characterseed-v2-0"
+}

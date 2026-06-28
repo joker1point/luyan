@@ -1,0 +1,37 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-23T13:39:20.581Z",
+  "execution": {
+    "status": "ready_to_present",
+    "lastLintCheckedAt": "2026-06-23T13:37:22.751Z",
+    "lastLintSummary": {
+      "p0": 0,
+      "p1": 16,
+      "p2": 11,
+      "fileCount": 13,
+      "checkedAt": "2026-06-23T13:37:22.751Z"
+    },
+    "tweaksStatus": "provided",
+    "tweaksCount": 3,
+    "nudgeControlSummary": {
+      "total": 3,
+      "color": 1,
+      "nonColor": 2,
+      "slider": 1,
+      "select": 0,
+      "lightTheme": 1,
+      "darkTheme": 1
+    },
+    "buildStatus": "passed",
+    "buildCommand": "npm run build",
+    "buildSummary": "Build succeeded in 6.33s, 2196 modules, 28.27KB CSS + 544.47KB JS (gzipped: 5.35KB + 159.45KB). Zero errors.",
+    "completedAt": "2026-06-23T13:39:20.581Z",
+    "noNonColorNudgesReason": "The artifact is a 2-page prototype with seed token architecture. Non-color controls (density, spacing scale, typography scale) would require component-level token bindings that exceed prototype scope. The 4 Appearance presets already provide meaningful visual variation through seed token patches on --seed-bg, --seed-fg, --seed-primary, --seed-accent, --seed-surface, --seed-radius."
+  },
+  "designPlan": {
+    "status": "approved",
+    "enteredAt": "2026-06-23T13:06:37.825Z",
+    "approvedAt": "2026-06-23T13:08:20.379Z",
+    "approvedPlanHash": "3d101f756901721bdfad0ce7d9265671ecd04a11692354dce075c6c02a8c7914"
+  }
+}

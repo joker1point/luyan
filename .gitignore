@@ -1,0 +1,56 @@
+# ===== 敏感配置 =====
+.env
+.env.*
+!.env.example
+
+# ===== 运行时数据 =====
+data/
+usercontext/
+*.db
+
+# ===== 日志 =====
+*.log
+
+# ===== Python 缓存 =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+
+# ===== Node =====
+node_modules/
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+
+# ===== 临时文件 =====
+*.err
+*.out
+*.zip
+*.tar.gz
+*.tar
+
+# ===== 部署产物 =====
+characterseed-deploy*
+
+# ===== 本地日志 / 截图 =====
+logs_*.txt
+test_screenshots/
+
+# ===== 本地临时文件 =====
+-w
+mem*.json
+tasklist*.txt
+usercontext_bak

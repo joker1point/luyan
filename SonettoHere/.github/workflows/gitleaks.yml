@@ -1,0 +1,49 @@
+# Gitleaks — Git 仓库密钥泄露扫描
+#
+# 每次 push 和 PR 时自动扫描提交中是否包含 API Key、Token、密码等敏感信息。
+# 官方 Action: https://github.com/gitleaks/gitleaks-action
+
+name: Gitleaks
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  # 允许 Gitleaks 在 PR 上创建评论（可选）
+  pull-requests: write
+  # 允许创 Security Checks
+  security-events: write
+  # 允许上传 SARIF 结果到 GitHub
+  actions: read
+  checks: write
+
+jobs:
+  gitleaks:
+    name: 🔍 Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 完整历史，扫描所有提交
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+          # 检测到密钥时是否使 CI 失败
+          GITLEAKS_ENABLE_COMMENTS: true
+          # 上传 SARIF 结果到 GitHub Security tab
+          GITLEAKS_UPLOAD_SARIF: true
+          # 扫描所有历史提交而非仅当前 commit
+          GITLEAKS_COMMIT_FROM: "origin/main"

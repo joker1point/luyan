@@ -1,0 +1,70 @@
+# Python CI — code style + 测试
+#
+# 每次 push 和 PR 时自动运行：
+#   1. ruff check — 代码风格与常见错误检查
+#   2. ruff format — 代码格式化验证
+#   3. pytest — 后端测试
+
+name: Python CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'feat/**'
+      - 'fix/**'
+      - 'chore/**'
+      - 'test/**'
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: 🧹 Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Lint — ruff check
+        run: ruff check .
+
+      - name: Format — ruff format
+        run: ruff format --check .
+
+  test:
+    name: 🧪 Test (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install test tools
+        run: pip install pytest pytest-asyncio pytest-cov
+
+      - name: Test — pytest
+        run: python -m pytest tests/ -v --tb=short --cov=api --cov=memory --cov=tools --cov-report=term

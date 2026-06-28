@@ -1,0 +1,105 @@
+# ===== 敏感配置 =====
+.env
+.env.*
+!.env.example
+
+# ===== 运行时数据 =====
+data/
+usercontext/
+
+# ===== 参考项目（不纳入版本控制）=====
+refproj/
+
+# ===== 日志 =====
+logs/
+*.log
+backend_stderr.log
+backend_stdout.log
+
+# ===== Python 缓存 =====
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+TraeAI-*/
+
+# ===== 测试缓存 =====
+.pytest_cache/
+
+# ===== 根目录测试文件（已统一迁移至 tests/，避免根目录残留）=====
+/test_creation.py
+/test_day4.py
+/test_refactored.py
+
+# ===== tests/ 下测试记录文件（统一存储在 records/ 子目录中，避免被 pytest 误收集）=====
+/tests/records/
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== AI 辅助工具配置 =====
+.codebuddy/
+
+# ===== 开发脚本（非产品组成部分）=====
+scripts/
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+
+# ===== 大型二进制构建产物/压缩包 =====
+doc/初赛/
+doc/路演SSOT/路演
+
+# ===== 临时文档 =====
+doc/todo.md
+doc/ref/
+
+# ===== Node.js 依赖 =====
+node_modules/
+package-lock.json
+
+# ===== 数据库文件 =====
+*.db
+*.sqlite
+*.sqlite3
+
+# ===== 临时测试脚本 =====
+test_*.ps1
+check_*.py
+probe_*.py
+repro_*.py
+loop_test.py
+
+# ===== 测试报告和截图 =====
+test_report.md
+*_results.json
+browser_test_result.json
+openapi_snapshot.json
+probe_results.json
+uvicorn.*
+*.err
+*.out
+
+# ===== 前端构建产物 =====
+frontend-package.zip
+
+# ===== 调试和开发文件 =====
+.codegraph/
+shots/
+debug-*.md
+
+# ===== 临时测试文件（tests/ 目录下的非正式测试） =====
+tests/debug_store.py
+tests/force_settings_refresh.py
+tests/phase1_poc.py
+tests/qa_*.py
+tests/smoke_*.py

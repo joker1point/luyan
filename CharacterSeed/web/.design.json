@@ -1,0 +1,287 @@
+{
+  "version": 1,
+  "updatedAt": "2026-06-23T13:10:00.000Z",
+  "brief": {
+    "artifactType": "app-ui",
+    "targetPlatform": [
+      "responsive",
+      "web"
+    ],
+    "audience": "AI角色创作者/互动爱好者",
+    "businessGoal": "让用户沉浸地与AI角色互动、轻松创建个性化角色，体验Apple级别的精致界面和流畅交互",
+    "productType": "AI角色互动平台",
+    "existingProject": "CharacterSeed - Vue3+Vite+TS, 5 views, 6 composables, SSE streaming chat, 6-dimension personality system, Director+Actor dual pipeline",
+    "pages": [
+      "Chat",
+      "Create"
+    ]
+  },
+  "output": {
+    "target": "react-vite",
+    "componentLibrary": "sparkdesign",
+    "previewStrategy": "Generate React/Vite project with Spark Design components, start dev server, and connect to Canvas frame for live preview."
+  },
+  "artifacts": [
+    {
+      "path": "react-vite/src/App.jsx",
+      "action": "create",
+      "purpose": "React 应用根组件，包含全局布局（顶部导航 + 页面路由切换）、Spark Design 主题配置（data-theme/data-style）、以及 Chat/Create 两个视图的条件渲染",
+      "requirements": [
+        "使用 Spark Design 的 SparkApp 或等效根容器设置 data-theme 和 data-style",
+        "顶部导航包含品牌标识、页面切换（Chat/Create）、主题切换（Light/Dark）",
+        "布局采用 Apple 风格的 spacious design，大量留白",
+        "支持 Light/Dark 双主题，通过 CSS seed tokens 驱动",
+        "响应式设计，适配桌面端和平板"
+      ]
+    },
+    {
+      "path": "react-vite/src/pages/ChatPage.jsx",
+      "action": "create",
+      "purpose": "聊天页面 - 核心互动场景。包含角色+会话管理面板、流式聊天气泡、thinking 阶段展示、打字机效果、消息输入区",
+      "requirements": [
+        "左侧：角色会话面板（可折叠为图标栏），展示角色头像+名称、每个角色下的会话列表、新建会话按钮",
+        "中央：聊天主区域 - 消息气泡（Apple Messages 风格）、thinking 阶段的优雅加载动画、流式打字机效果、时间戳",
+        "底部：消息输入区 - 支持多行输入、Shift+Enter换行、Enter发送、字符计数",
+        "空状态：未选角色/无消息时的引导页面",
+        "消息气泡区分 user/assistant，assistant 气泡含 Director thinking 展开区",
+        "会话列表支持新建、删除、重命名",
+        "使用 Spark Design 的 Response、ChatInput 等 chat recipe 组件"
+      ]
+    },
+    {
+      "path": "react-vite/src/pages/CreatePage.jsx",
+      "action": "create",
+      "purpose": "角色创建页面 - 引导用户创建AI角色。包含文本/TXT双模式输入、6维人格可视化、角色预览、创建确认",
+      "requirements": [
+        "分段式创建流程：基本信息 → 性格定义 → 人格维度 → 预览确认",
+        "基本信息区：角色名称、描述、头像上传占位",
+        "性格定义区：文本模式（自由描述）和 TXT上传模式 双 tab 切换",
+        "6维人格可视化：雷达图/进度条展示 6 个人格维度（如开放性、尽责性、外向性、宜人性、神经质、创造力）",
+        "角色预览卡片：实时预览已填写的角色信息",
+        "创建按钮 + 成功反馈动画",
+        "使用 Apple 风格的分组卡片布局（类似 iOS Settings grouped cards）",
+        "表单验证与错误提示"
+      ]
+    },
+    {
+      "path": "react-vite/src/styles.css",
+      "action": "create",
+      "purpose": "全局样式 - 基于 Apple 设计语言的 seed tokens、组件 tokens、布局系统、动画定义",
+      "requirements": [
+        "定义 --seed-bg, --seed-fg, --seed-primary, --seed-accent, --seed-surface, --seed-radius 等 seed tokens",
+        "Light/Dark 双主题通过 presetOptions 切换 seed tokens",
+        "Apple 风格排版系统：SF Pro 或 Inter 作为主字体，合理的字号/行高层级",
+        "frosted glass / backdrop-filter 效果用于导航栏",
+        "流畅的过渡动画（ease-in-out, spring-like curves）",
+        "Spark Design tokens 作为基础，扩展项目级 tokens",
+        "响应式断点定义"
+      ]
+    },
+    {
+      "path": "react-vite/canvas-design.html",
+      "action": "create",
+      "purpose": "Canvas 设计预览入口页，用于在 Canvas 中展示和导航 React 应用的各个页面",
+      "requirements": [
+        "包含页面导航链接指向 Chat 和 Create 视图",
+        "作为 Canvas frame 的 designUrl 入口"
+      ]
+    },
+    {
+      "path": "react-vite/package.json",
+      "action": "create",
+      "purpose": "项目依赖配置 - React 18 + Vite + Spark Design + 必要工具链",
+      "requirements": [
+        "react, react-dom, vite, @vitejs/plugin-react",
+        "Spark Design 组件库依赖",
+        "recharts（用于6维人格雷达图）",
+        "lucide-react（图标库）"
+      ]
+    },
+    {
+      "path": "react-vite/src/components/ChatBubble.jsx",
+      "action": "create",
+      "purpose": "聊天气泡组件 - Apple Messages 风格的消息展示，支持 user/assistant 区分、thinking 阶段、打字机动画",
+      "requirements": [
+        "user 消息右对齐蓝色气泡，assistant 消息左对齐灰色气泡",
+        "thinking 阶段展示：优雅的脉冲动画 + 阶段文字",
+        "打字机效果：逐字显示 + 闪烁光标",
+        "Director thinking 可展开/折叠区域",
+        "时间戳显示",
+        "消息状态指示（发送中/已发送）"
+      ]
+    },
+    {
+      "path": "react-vite/src/components/SessionPanel.jsx",
+      "action": "create",
+      "purpose": "会话管理面板 - 角色列表 + 会话列表的可折叠侧面板",
+      "requirements": [
+        "折叠态：仅显示角色头像图标的窄栏",
+        "展开态：角色列表 + 选中角色下的会话列表",
+        "新建会话、删除会话、重命名会话操作",
+        "当前选中会话高亮",
+        "角色头像 + 名称 + 最后消息预览",
+        "平滑的折叠/展开动画"
+      ]
+    },
+    {
+      "path": "react-vite/src/components/PersonalityRadar.jsx",
+      "action": "create",
+      "purpose": "6维人格雷达图组件 - 可视化展示角色的6个人格维度",
+      "requirements": [
+        "使用 recharts RadarChart 或自定义 SVG 实现",
+        "6个维度：开放性、尽责性、外向性、宜人性、神经质、创造力",
+        "支持动态数据绑定和实时更新",
+        "Apple 风格的简洁配色和标注",
+        "空数据时的占位状态"
+      ]
+    }
+  ],
+  "designDirection": {
+    "fidelity": "high-fidelity",
+    "styleSource": "Apple design language as primary, with OpenAI/Cohere as AI product inspiration",
+    "visualTone": [
+      "clean",
+      "minimal",
+      "premium",
+      "spacious",
+      "refined"
+    ],
+    "designSystemId": "apple",
+    "inspirationIds": [
+      "openai",
+      "cohere"
+    ],
+    "colorDirection": "Neutral base (white/gray/black) with a single accent color for interactive elements; subtle gradients for depth",
+    "typographyDirection": "SF Pro or Inter; clear hierarchy with 4-5 size levels; generous line-height",
+    "layoutDirection": "Abandon traditional sidebar; use collapsible session panel + full-width chat area; card-based grouped sections for create page"
+  },
+  "structure": {
+    "screens": [
+      {
+        "name": "Chat",
+        "route": "/chat",
+        "description": "聊天页 - 角色会话管理 + 流式聊天互动",
+        "sections": [
+          "可折叠会话面板（角色列表 + 会话列表）",
+          "聊天主区域（消息气泡流 + thinking 动画 + 打字机）",
+          "消息输入区（多行输入 + 发送按钮）",
+          "空状态引导（未选角色/无消息）"
+        ]
+      },
+      {
+        "name": "Create",
+        "route": "/create",
+        "description": "角色创建页 - 分步引导创建AI角色",
+        "sections": [
+          "顶部步骤指示器（基本信息 → 性格 → 人格 → 预览）",
+          "表单内容区（分组卡片式布局）",
+          "侧边预览卡片（实时角色信息预览 + 6维雷达图）",
+          "底部操作栏（上一步/下一步/创建）"
+        ]
+      }
+    ],
+    "sections": [
+      "顶部导航栏（frosted glass 效果，品牌 + 页面切换 + 主题切换）",
+      "Chat: 可折叠会话面板",
+      "Chat: 消息气泡流",
+      "Chat: 消息输入区",
+      "Create: 步骤指示器",
+      "Create: 分组卡片表单",
+      "Create: 实时预览卡片",
+      "Create: 6维人格雷达图"
+    ]
+  },
+  "interaction": {
+    "primaryFlow": "用户进入应用 → 在 Chat 页选择/创建角色和会话 → 发送消息 → 观察 thinking 动画 → 阅读流式回复 → 切换到 Create 页创建新角色 → 填写信息 → 调整人格维度 → 确认创建",
+    "states": [
+      "empty: 未选择角色时的 Chat 页引导",
+      "loading: 消息发送后的 thinking/streaming 状态",
+      "error: 网络断开或后端错误时的提示",
+      "success: 角色创建成功的反馈",
+      "collapsed: 会话面板折叠态",
+      "expanded: 会话面板展开态",
+      "streaming: 流式消息接收中的打字机效果",
+      "thinking: Director/Actor 思考阶段的脉冲动画"
+    ]
+  },
+  "quality": {
+    "responsive": true,
+    "accessibility": true,
+    "lintRequired": true,
+    "acceptanceCriteria": [
+      "Generated artifact is responsive and has no obvious text overlap or clipped primary controls.",
+      "Primary actions, input controls, empty/loading/error states, and key content are visible and grounded in the brief.",
+      "Design quality check has P0=0 and all P1 issues are fixed or explicitly waived.",
+      "React/Vite output is runnable through npm run build with no errors.",
+      "Spark Design output uses real Spark components or source-owned copies instead of HTML-only primitives.",
+      "Spark Design root sets data-theme and data-style, and styling uses Spark tokens.",
+      "Chat surfaces use appropriate chat recipe components (Response, ChatInput, etc.) when applicable.",
+      "Apple design language is reflected in spacing, typography, materials (frosted glass), and micro-interactions.",
+      "6-dimension personality radar chart is functional and visually integrated."
+    ]
+  },
+  "risks": [
+    "Spark Design 的 chat recipe 组件可能与 Apple 风格需要额外定制",
+    "6维雷达图在移动端可能需要简化展示",
+    "thinking 阶段的动画复杂度可能影响性能",
+    "当前仅实现 Chat + Create 两个页面，其他页面（Events/Status/Settings）的导航入口需要预留"
+  ],
+  "resources": {
+    "skill": {
+      "id": "dashboard",
+      "title": "dashboard",
+      "rationale": "mode matches prototype; design intelligence favors dashboard/data workflow",
+      "alternatives": [
+        "mobile-app",
+        "saas-landing",
+        "web-prototype"
+      ]
+    },
+    "styleReference": {
+      "primary": "apple",
+      "inspiration": [
+        "openai",
+        "cohere"
+      ],
+      "rationale": "User explicitly selected Apple as primary design system; OpenAI and Cohere added as AI product domain inspiration"
+    },
+    "requiredReads": [
+      {
+        "kind": "skill",
+        "id": "dashboard",
+        "reason": "Selected Canvas skill checklist."
+      },
+      {
+        "kind": "design-system",
+        "id": "apple",
+        "reason": "Primary style reference - Apple design language."
+      },
+      {
+        "kind": "craft",
+        "id": "anti-ai-slop",
+        "reason": "Baseline AI-slop guardrail."
+      },
+      {
+        "kind": "craft",
+        "id": "typography",
+        "reason": "Baseline typography quality rule."
+      },
+      {
+        "kind": "craft",
+        "id": "color",
+        "reason": "Baseline color quality rule."
+      },
+      {
+        "kind": "protocol",
+        "id": "design-mode-runtime",
+        "reason": "Design Plan Mode execution contract."
+      },
+      {
+        "kind": "protocol",
+        "id": "skill-protocol",
+        "reason": "Skill metadata contract."
+      }
+    ]
+  },
+  "abstract": "为 CharacterSeed AI 角色互动平台重新设计 Chat（聊天）和 Create（角色创建）两个核心页面。采用 Apple 设计语言（大量留白、frosted glass 材质、精致排版）结合 Spark Design 组件库，输出可落地的 React + Vite 代码。布局上摒弃传统侧边栏，Chat 页使用可折叠会话面板 + 全宽聊天区域，Create 页使用分步引导 + 分组卡片 + 实时预览。设计将覆盖完整的交互状态（空态、加载、流式打字机、thinking 动画、错误态），并包含 6 维人格雷达图可视化。批准前请确认：布局方向、Apple 风格的浓淡程度、以及是否需要预留其他页面（Events/Status/Settings）的导航入口。"
+}

@@ -1,0 +1,72 @@
+# Python
+__pycache__/
+*.py[cod]
+.coverage
+.pytest_cache/
+*.egg-info/
+/dist/
+build/
+*.egg
+
+# Virtual environment
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Frontend
+web/node_modules/
+web/dist/
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude Code
+.claude/
+
+# 用户固定会话（Const Session）持久化数据
+api/data/const-sessions/
+
+# Project specific
+botpy.log
+*.dll
+extracted/
+config/personas/USER.md
+config/personas/SOUL.md
+config/personas/MEMORY.md
+config/personas/memory_operations.yaml
+skills/bilibili/cookie.txt
+tools/bilibili/cookie.txt
+output/bilibili/
+config/personas/memory.yaml
+*.lock
+*.clean
+
+# Provider credentials (明文 API key)
+providers.yaml
+
+# 路径白名单（自动生成，每用户本地配置）
+api/data/path_whitelist.yaml
+
+# SonettoBlocker 拒止锚数据（自动生成，每用户本地配置）
+api/data/sonetto_blocker.yaml
+api/data/SonettoBlocker
+
+# 认证 Token（自动生成，每用户本地配置）
+api/data/auth_token.yaml
+
+# Anthropic Skills（忽略 skill 子目录，保留目录本身用于 .gitkeep）
+anthropic_skills/*/
+
+# Macros（同上）
+macros/*/
