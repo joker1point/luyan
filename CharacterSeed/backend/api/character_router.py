@@ -51,6 +51,8 @@ router = APIRouter(tags=["character"])
 async def create_character(
     description: Optional[str] = Form(None),
     story_file: Optional[UploadFile] = File(None),
+    name: Optional[str] = Form(None),           # [F2 新增] 用户填的角色名（优先于 LLM 推断）
+    dimensions: Optional[str] = Form(None),     # [F3 新增] JSON 字符串，LLM 参考的用户设定维度
     db: Session = Depends(get_db),
 ):
     """创建角色（支持一句话描述或TXT文件上传）。"""
@@ -67,9 +69,17 @@ async def create_character(
         raise HTTPException(status_code=400, detail="必须提供description或story_file")
 
     try:
-        parsed_data, raw_response = get_creation_module().run(user_input, input_type)
+        parsed_data, raw_response = get_creation_module().run(
+            user_input,
+            input_type,
+            preferred_name=name,           # [F2 透传] 用户指定名（可为 None，让 LLM 猜）
+            dimensions_hint=dimensions,    # [F3 透传] 用户设定维度（JSON 字符串，可为 None）
+        )
 
-        name = parsed_data.get("name", "未命名角色")
+        llm_name = parsed_data.get("name", "未命名角色")
+        # [F2] 用户提供了 name → 优先使用，避免 LLM 改名字
+        user_name = (name or "").strip()
+        final_name = user_name if user_name else llm_name
         world_setting = parsed_data.get("world_setting")
         personality = parsed_data.get("personality", {})
         current_state = parsed_data.get("current_state", {})
@@ -79,7 +89,7 @@ async def create_character(
 
         db_character = character_crud.create_character(
             db=db,
-            name=name,
+            name=final_name,
             description=user_input[:500],
             world_setting=world_setting,
             personality=personality,
