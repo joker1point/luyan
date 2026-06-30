@@ -90,7 +90,23 @@ class LLMService:
 
     def __init__(self):
         # 主 provider = active_provider（向后兼容旧代码直接读 self.client / self.model）
-        self.reload_config()
+        # [P0 修复] 即使主 provider 初始化失败（API Key 为空等），也要加载 task_routing，
+        # 否则路由配置丢失，task='creation' 也会被解析为 active_provider（默认 agnes）。
+        try:
+            from backend.services.llm_settings_store import LLMSettingsStore
+            store = LLMSettingsStore()
+            self._active_provider_id = store.get_active_provider_id()
+            self._task_routing = store.get_task_routing()
+        except Exception:
+            self._active_provider_id = "agnes"
+            self._task_routing = {}
+        try:
+            self.reload_config()
+        except (ValueError, RuntimeError):
+            self.client = None
+            self.model = ""
+            self.base_url = ""
+            self.api_key = ""
 
     def reload_config(self, provider_id: Optional[str] = None) -> None:
         """
@@ -563,6 +579,7 @@ class LLMService:
         client = prov["client"]
         provider_id = prov["provider"]
         last_exception = None
+        client_reset_done = False  # [P0 修复] 首次连接错误时重建 client，避免死连接复用
         for attempt in range(self._MAX_RETRIES):
             try:
                 response = client.chat.completions.create(**kwargs)
@@ -582,6 +599,15 @@ class LLMService:
 
             except APIConnectionError as e:
                 delay = _compute_retry_delay(attempt)
+                # [P0 修复] 首次 APIConnectionError 立即重建 client —— 死连接不能再用
+                # 否则后续重试会一直用死连接，必然全部失败
+                if not client_reset_done:
+                    try:
+                        self._reset_client(provider_id)
+                        client = prov["client"]  # 重建后 client 引用变了
+                    except Exception as reset_err:
+                        logger.warning("重建 client 失败: %s", reset_err)
+                    client_reset_done = True
                 logger.warning(f"LLM连接失败(provider={provider_id}): attempt={attempt+1}/{self._MAX_RETRIES}, delay={delay:.2f}s, {str(e)[:200]}")
                 if attempt < self._MAX_RETRIES - 1:
                     time.sleep(delay)

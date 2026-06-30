@@ -40,17 +40,20 @@ class EnhancedInteractionPipeline:
         self,
         enable_memory: bool = True,
         short_term_k: int = 10,
-        max_context_tokens: int = 4000
+        max_context_tokens: int = 4000,
+        base_pipeline: Optional[InteractionPipeline] = None,
     ):
         """
         初始化增强版管线
-        
+
         Args:
             enable_memory: 是否启用记忆系统
             short_term_k: 短期记忆轮数
             max_context_tokens: 最大上下文 Token 预算
+            base_pipeline:  外部传入的基础管线（[CTX-2 修复] 避免重复创建 LLMService 单例）
         """
-        self.base_pipeline = InteractionPipeline()
+        # [CTX-2 修复] 允许外部传入 base_pipeline，复用同一个 LLMService/prompt 缓存
+        self.base_pipeline = base_pipeline or InteractionPipeline()
         self.enable_memory = enable_memory
         self.short_term_k = short_term_k
         self.max_context_tokens = max_context_tokens
@@ -102,7 +105,8 @@ class EnhancedInteractionPipeline:
         character_id: int,
         user_message: str,
         db: Session,
-        user_id: Optional[str] = None
+        user_id: Optional[str] = None,
+        session_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
         运行增强版对话管线
@@ -191,10 +195,32 @@ class EnhancedInteractionPipeline:
     ) -> Dict[str, Any]:
         """
         异步版本（支持知识库异步检索）
-        
+
         当前为同步调用的别名，未来可扩展为真正的异步实现
         """
         return self.run(character_id, user_message, db, user_id)
+
+    def run_stream(
+        self,
+        character_id: int,
+        user_message: str,
+        db: Session,
+        history_turns: int = 8,
+        session_id: Optional[int] = None,
+    ):
+        """
+        流式版本（[CTX-2 修复] chat_router SSE 需要此接口）。
+
+        当前实现：直接委托给 base_pipeline.run_stream，保持流式透明。
+        后续可在此层注入 ContextManager 预热 / 记忆更新事件。
+        """
+        return self.base_pipeline.run_stream(
+            character_id=character_id,
+            user_message=user_message,
+            db=db,
+            history_turns=history_turns,
+            session_id=session_id,
+        )
     
     def get_memory_stats(
         self,

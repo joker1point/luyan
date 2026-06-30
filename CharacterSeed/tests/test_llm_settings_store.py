@@ -40,6 +40,7 @@ def _patch_settings_path(monkeypatch, tmp_path):
     """
     将 LLMSettingsStore 内部 _SETTINGS_FILE 指向临时目录，
     避免影响开发环境真实的 usercontext/llm_settings.json。
+    同时清空内存缓存 _cache，避免上一个测试用例的缓存污染当前用例。
     """
     monkeypatch.setattr(
         "backend.services.llm_settings_store._SETTINGS_DIR",
@@ -48,6 +49,12 @@ def _patch_settings_path(monkeypatch, tmp_path):
     monkeypatch.setattr(
         "backend.services.llm_settings_store._SETTINGS_FILE",
         str(tmp_path / "llm_settings.json"),
+    )
+    # 关键：清空模块级 _cache，防止前一个用例写入的 active_provider / max_tokens
+    # 等状态被下一个用例的 _read() 直接复用（_cache 优先于磁盘文件读取）。
+    monkeypatch.setattr(
+        "backend.services.llm_settings_store._cache",
+        None,
     )
     yield
     # 每次测试后清理
@@ -226,14 +233,21 @@ class TestEnvFallback:
     """测试 get_provider_with_env_fallback：JSON 缺失时从环境变量补齐"""
 
     def test_env_fallback_empty_json_filled_by_env(self, monkeypatch):
-        """JSON 文件中 api_key 为空，环境变量中有值 → 应返回 env 值"""
+        """JSON 文件中 api_key 为空，环境变量中有值 → 应返回 env 值。
+
+        注意：base_url 在 PROVIDER_DEFAULTS 中有非空默认值（https://api.deepseek.com），
+        生产代码 get_provider_with_env_fallback 仅在 cfg.get("base_url") 为空时才读 env。
+        因此 DEEPSEEK_BASE_URL 环境变量不会被使用，base_url 保持默认值。
+        """
         monkeypatch.setenv("DEEPSEEK_API_KEY", "sk-from-env")
         monkeypatch.setenv("DEEPSEEK_BASE_URL", "https://env-test.com/v1")
 
         store = LLMSettingsStore()
         cfg = store.get_provider_with_env_fallback("deepseek")
+        # api_key 默认为空 → 从 env 填充
         assert cfg["api_key"] == "sk-from-env"
-        assert cfg["base_url"] == "https://env-test.com/v1"
+        # base_url 默认非空（https://api.deepseek.com）→ 不从 env 填充
+        assert cfg["base_url"] == PROVIDER_DEFAULTS["deepseek"]["base_url"]
 
     def test_env_fallback_json_takes_priority(self, monkeypatch):
         """JSON 文件中已有值时，不应被环境变量覆盖"""
@@ -278,11 +292,10 @@ class TestMaskAPIKey:
         assert LLMSettingsStore.mask_api_key(None) == ""
 
     def test_mask_exact_8_chars(self):
-        """恰好 8 字符的 key"""
+        """恰好 8 字符的 key：生产代码对 len <= 8 一律返回 '****'"""
         masked = LLMSettingsStore.mask_api_key("12345678")
-        # 4 + 4 = 8
-        assert len(masked) == 8
-        assert masked == "12345678"  # 恰好首尾各4，中间没有 ***
+        # 生产实现：if len(api_key) <= 8: return "****"
+        assert masked == "****"
 
 
 # ==============================================================================

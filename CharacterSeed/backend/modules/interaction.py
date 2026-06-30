@@ -270,8 +270,49 @@ FALLBACK_DIRECTOR_OUTPUT: Dict[str, Any] = {
 FALLBACK_ACTOR_OUTPUT: Dict[str, Any] = {
     "action": "站在原地，注视着玩家",
     "expression": "表情平静",
-    "speech": "（角色暂时无法回应）",
+    # [FB-1 修复] speech 留 None，由 _localized_fallback() 根据上下文语言填充
+    "speech": None,
 }
+
+# [FB-1 修复] 多语言回退短语映射（Actor LLM 不可用时使用）
+_FALLBACK_PHRASES: Dict[str, str] = {
+    "zh": "（角色暂时无法回应）",
+    "en": "(The character is unable to respond right now)",
+    "ja": "（キャラクターは今応答できません）",
+    "default": "（角色暂时无法回应）",
+}
+
+
+def _infer_language(text: str) -> str:
+    """根据字符集粗略推断文本主语言。"""
+    if not text:
+        return "default"
+    has_cjk = False
+    has_kana = False
+    for ch in text:
+        code = ord(ch)
+        if 0x3040 <= code <= 0x30FF:  # 平假名/片假名
+            has_kana = True
+            break
+        if 0x4E00 <= code <= 0x9FFF:  # CJK
+            has_cjk = True
+    if has_kana:
+        return "ja"
+    if has_cjk:
+        return "zh"
+    # 拉丁字符占比高 → 英文
+    ascii_letters = sum(1 for c in text if c.isascii() and c.isalpha())
+    if ascii_letters > len(text) * 0.3:
+        return "en"
+    return "default"
+
+
+def _localized_fallback(user_input: str, character_name: str = "") -> str:
+    """根据 user_input / character_name 推断语言后，返回本地化回退短语。"""
+    lang = _infer_language(user_input) if user_input else "default"
+    if lang == "default" and character_name:
+        lang = _infer_language(character_name)
+    return _FALLBACK_PHRASES.get(lang, _FALLBACK_PHRASES["default"])
 
 
 # ============================================================================
@@ -467,6 +508,7 @@ class ActorModule:
         goal: str,
         style: str,
         user_input: str,
+        scene_context: str = "",        # [修复 1] 角色当前场景上下文（世界四要素 + 位置）
         history_messages: Optional[List[Dict[str, str]]] = None,
     ) -> Tuple[Dict[str, Any], str]:
         """
@@ -511,6 +553,7 @@ class ActorModule:
             "goal": goal,
             "style": style,
             "user_input": user_input,
+            "scene_context": scene_context,       # [修复 1] 填入 actor.txt 第 13 行的 {scene_context} 占位符
         })
 
         # 使用 string.Template 风格安全性建 prompt
@@ -566,12 +609,13 @@ class ActorModule:
         goal: str,
         style: str,
         user_input: str,
+        scene_context: str = "",        # [修复 1] 透传给 generate()
         history_messages: Optional[List[Dict[str, str]]] = None,
     ) -> Tuple[Dict[str, Any], Optional[str]]:
         """
         带降级的行为生成。
 
-        history_messages 透传给 generate()，语义与 generate() 一致。
+        history_messages / scene_context 透传给 generate()，语义与 generate() 一致。
 
         Returns:
             (parsed_data, raw_response_or_None)
@@ -582,13 +626,18 @@ class ActorModule:
             return self.generate(
                 character_name, personality, emotion,
                 focus_memories, goal, style, user_input,
+                scene_context=scene_context,
                 history_messages=history_messages,
             )
         except Exception as e:
             logger.warning(
                 "Actor LLM 调用失败，使用降级输出: %s", e
             )
-            return dict(FALLBACK_ACTOR_OUTPUT), None
+            fallback = dict(FALLBACK_ACTOR_OUTPUT)
+            if fallback.get("speech") is None:
+                # [FB-1 修复] 根据 user_input/character_name 语言填充本地化回退文本
+                fallback["speech"] = _localized_fallback(user_input, character_name)
+            return fallback, None
 
     def generate_stream(
         self,
@@ -599,6 +648,7 @@ class ActorModule:
         goal: str,
         style: str,
         user_input: str,
+        scene_context: str = "",        # [修复 1] 流式版本同样需要填入 {scene_context}
         history_messages: Optional[List[Dict[str, str]]] = None,
     ) -> Generator[Tuple[str, Any], None, None]:
         """
@@ -633,6 +683,7 @@ class ActorModule:
             "goal": goal,
             "style": style,
             "user_input": user_input,
+            "scene_context": scene_context,       # [修复 1] 流式版本填入 scene_context
         })
 
         prompt = self.prompt_template
@@ -701,7 +752,8 @@ class ActorModule:
                 goal=goal,
                 style=style,
                 user_input=user_input,
-                history_messages=history_messages or None,
+                scene_context=scene_context,        # [修复 1] 透传给 fallback
+                history_messages=history_messages if history_messages else None,  # [EH-1 修复] 显式空值判断，避免空列表被替换为 None
             )
             # 把整段 speech 作为单次 speech_delta 发出，前端会一次性追加
             fallback_speech = fallback_data.get("speech", "")
@@ -723,9 +775,13 @@ class ActorModule:
             # fallback 也失败 → 真正的降级输出（占位回复）
             logger.error("Actor fallback 也失败，使用降级输出: %s", e2)
             yield ("error", f"{str(stream_failed)[:100] if stream_failed else ''} | fallback: {str(e2)[:100]}")
+            fallback = dict(FALLBACK_ACTOR_OUTPUT)
+            if fallback.get("speech") is None:
+                # [FB-1 修复] 二次 fallback 也填充本地化文本
+                fallback["speech"] = _localized_fallback(user_input, character_name)
             yield ("done", {
-                **FALLBACK_ACTOR_OUTPUT,
-                "raw": parser.raw_buffer or json.dumps(FALLBACK_ACTOR_OUTPUT, ensure_ascii=False),
+                **fallback,
+                "raw": parser.raw_buffer or json.dumps(fallback, ensure_ascii=False),
             })
 
 
@@ -1061,7 +1117,7 @@ class InteractionPipeline:
         character_id: int,
         user_message: str,
         db: Session,
-        history_turns: int = 10,
+        history_turns: int = 8,  # [PIPE-1 修复] 与 run_stream() 统一为 8，消除非对称行为
         session_id: Optional[int] = None,
     ) -> Dict[str, Any]:
         """
@@ -1147,6 +1203,58 @@ class InteractionPipeline:
                 }
         except Exception as _e:
             logger.debug("world 状态注入跳过: %s", _e)
+            world_sub = None
+
+        # ---- 节点 1.6.1：世界设定背景注入（修复 4）----
+        # 把 Character.world_setting 注入到 current_state._world_setting，
+        # Director 即可看到"这个世界是什么样的"设定信息。
+        if character.world_setting and character.world_setting.strip():
+            current_state = {
+                **current_state,
+                "_world_setting": character.world_setting,
+            }
+
+        # ---- 节点 1.7：最近完成事件注入（修复 2）----
+        # 把当日 / 最近 3 条 completed 事件摘要注入到 current_state._events 子字段。
+        # 设计：与 _world / _jiwen 同样的零模板侵入策略。
+        # 失败不阻塞主流程：Event 表为空或查询失败时静默跳过。
+        try:
+            from backend.models import Event as _Event
+            recent_events = db.query(_Event).filter(
+                _Event.character_id == character_id,
+                _Event.status == "completed",
+            ).order_by(_Event.day_number.desc(), _Event.order_index.desc()).limit(3).all()
+
+            if recent_events:
+                event_lines = []
+                for ev in recent_events:
+                    label = f"[Day{ev.day_number}] {ev.content[:80]}"
+                    if ev.result_json:
+                        try:
+                            result = json.loads(ev.result_json)
+                            if result.get("narrative_delta"):
+                                label += f" → {result['narrative_delta'][:60]}"
+                        except Exception:
+                            pass
+                    event_lines.append(label)
+
+                current_state = {
+                    **current_state,
+                    "_events": {
+                        "summary": "最近发生的事：\n" + "\n".join(event_lines),
+                        "events": [
+                            {
+                                "day": ev.day_number,
+                                "type": ev.event_type,
+                                "content": ev.content[:120],
+                                "time_period": ev.time_period,
+                            }
+                            for ev in recent_events
+                        ],
+                    },
+                }
+        except Exception as _e:
+            logger.debug("事件上下文注入跳过: %s", _e)
 
         # ---- 节点 2：获取最近记忆（最多 5 条） ----
         # 设计考量：限制 5 条是 prompt token 预算与上下文丰富度之间的平衡点。
@@ -1244,21 +1352,44 @@ class InteractionPipeline:
             current_state=current_state,
             recent_memories=memory_texts,
             user_input=user_message,
-            history_messages=history_messages or None,
+            history_messages=history_messages if history_messages else None,  # [EH-1 修复] 显式空值判断，避免空列表被替换为 None
         )
         _director_ms = int((_time.monotonic() - _t_d0) * 1000)
 
         # ---- 节点 4：执行 Actor 行为生成 ----
         # Actor 接收 Director 的完整输出作为上下文
-        # 附加 jiwen style_guidance（情绪→语气映射）到 style 字段
-        actor_style = director_data["style"]
+        # 附加风格指引（jiwen 情绪 + world 场景）到 style 字段
+        # 修复 3：world 场景感知（天气/季节）也注入风格指引
+        style_guidance_parts = []
+
+        # 1) jiwen 情绪风格
         try:
             from backend.jiwen import get_jiwen_manager as _gjm
             jiwen_style = _gjm().get_style_guidance(character_id)
             if jiwen_style and jiwen_style.strip():
-                actor_style = f"{director_data['style']}\n\n[情绪状态风格指引]\n{jiwen_style}"
+                style_guidance_parts.append(f"[情绪状态]\n{jiwen_style}")
         except Exception:
             pass
+
+        # 2) world 场景风格（天气/季节）
+        try:
+            from backend.world.location_aware import get_style_guidance as _world_style
+            world_style_g = _world_style(character_id)
+            if world_style_g and world_style_g.strip():
+                style_guidance_parts.append(f"[场景感知]\n{world_style_g}")
+        except Exception:
+            pass
+
+        if style_guidance_parts:
+            actor_style = f"{director_data['style']}\n\n" + "\n\n".join(style_guidance_parts)
+        else:
+            actor_style = director_data["style"]
+
+        # 修复 1-C：从 world_sub 中提取场景上下文，供 Actor prompt 的 {scene_context} 替换
+        scene_context = ""
+        if world_sub and world_sub.get("summary"):
+            scene_context = world_sub["summary"]
+
         _t_a0 = _time.monotonic()
         actor_data, actor_raw = self.actor.generate_with_fallback(
             character_name=character.name,
@@ -1268,7 +1399,8 @@ class InteractionPipeline:
             goal=director_data["goal"],
             style=actor_style,
             user_input=user_message,
-            history_messages=history_messages or None,
+            scene_context=scene_context,        # [修复 1-C] 传入场景上下文
+            history_messages=history_messages if history_messages else None,  # [EH-1 修复] 显式空值判断，避免空列表被替换为 None
         )
         _actor_ms = int((_time.monotonic() - _t_a0) * 1000)
 
@@ -1359,7 +1491,7 @@ class InteractionPipeline:
         character_id: int,
         user_message: str,
         db: Session,
-        history_turns: int = 5,  # [P1-3 修复] 10→5 缩短 history，降低 LLM 输入 token，TTFT 节省 300-800ms
+        history_turns: int = 8,  # [PIPE-1 修复] 与 run() 统一为 8，折中 token 成本与上下文一致性
         session_id: Optional[int] = None,
     ) -> Generator[Tuple[str, Any], None, None]:
         """
@@ -1427,6 +1559,69 @@ class InteractionPipeline:
             }
         except Exception as _e:
             logger.debug("jiwen 状态注入跳过: %s", _e)
+
+        # ---- 节点 1.6：世界四要素上下文注入（ADR-009，run_stream 同步）----
+        # run() 已有此节点；run_stream 之前缺失，导致流式路径下：
+        #   - scene_context 为空（修复 1-C 透传不到 Actor）
+        #   - world 风格指引无法生成（修复 3 失效）
+        # 失败不阻塞主流程。
+        world_sub = None
+        try:
+            from backend.world import build_world_subfield
+            world_sub = build_world_subfield(character_id)
+            if world_sub:
+                current_state = {
+                    **current_state,
+                    "_world": world_sub,
+                }
+        except Exception as _e:
+            logger.debug("world 状态注入跳过: %s", _e)
+
+        # ---- 节点 1.6.1：世界设定背景注入（修复 4）----
+        if character.world_setting and character.world_setting.strip():
+            current_state = {
+                **current_state,
+                "_world_setting": character.world_setting,
+            }
+
+        # ---- 节点 1.7：最近完成事件注入（修复 2）----
+        try:
+            from backend.models import Event as _Event
+            recent_events = db.query(_Event).filter(
+                _Event.character_id == character_id,
+                _Event.status == "completed",
+            ).order_by(_Event.day_number.desc(), _Event.order_index.desc()).limit(3).all()
+
+            if recent_events:
+                event_lines = []
+                for ev in recent_events:
+                    label = f"[Day{ev.day_number}] {ev.content[:80]}"
+                    if ev.result_json:
+                        try:
+                            result = json.loads(ev.result_json)
+                            if result.get("narrative_delta"):
+                                label += f" → {result['narrative_delta'][:60]}"
+                        except Exception:
+                            pass
+                    event_lines.append(label)
+
+                current_state = {
+                    **current_state,
+                    "_events": {
+                        "summary": "最近发生的事：\n" + "\n".join(event_lines),
+                        "events": [
+                            {
+                                "day": ev.day_number,
+                                "type": ev.event_type,
+                                "content": ev.content[:120],
+                                "time_period": ev.time_period,
+                            }
+                            for ev in recent_events
+                        ],
+                    },
+                }
+        except Exception as _e:
+            logger.debug("事件上下文注入跳过: %s", _e)
 
         # ---- 节点 2：获取最近记忆 ----
         recent_memories = memory_crud.get_character_memories(
@@ -1537,7 +1732,7 @@ class InteractionPipeline:
             current_state=current_state,
             recent_memories=memory_texts,
             user_input=user_message,
-            history_messages=history_messages or None,
+            history_messages=history_messages if history_messages else None,  # [EH-1 修复] 显式空值判断，避免空列表被替换为 None
         )
         _director_ms = int((_time.monotonic() - _t_d0) * 1000)
 
@@ -1567,15 +1762,32 @@ class InteractionPipeline:
         actor_speech = ""
         actor_raw = ""
 
-        # 附加 jiwen style_guidance（情绪→语气映射）到 style 字段
-        actor_style = director_data["style"]
+        # 附加风格指引（jiwen 情绪 + world 场景，修复 3）
+        style_guidance_parts = []
         try:
             from backend.jiwen import get_jiwen_manager as _gjm
             jiwen_style = _gjm().get_style_guidance(character_id)
             if jiwen_style and jiwen_style.strip():
-                actor_style = f"{director_data['style']}\n\n[情绪状态风格指引]\n{jiwen_style}"
+                style_guidance_parts.append(f"[情绪状态]\n{jiwen_style}")
         except Exception:
             pass
+        try:
+            from backend.world.location_aware import get_style_guidance as _world_style
+            world_style_g = _world_style(character_id)
+            if world_style_g and world_style_g.strip():
+                style_guidance_parts.append(f"[场景感知]\n{world_style_g}")
+        except Exception:
+            pass
+
+        if style_guidance_parts:
+            actor_style = f"{director_data['style']}\n\n" + "\n\n".join(style_guidance_parts)
+        else:
+            actor_style = director_data["style"]
+
+        # 修复 1-C：run_stream 同步传入 scene_context
+        scene_context = ""
+        if world_sub and world_sub.get("summary"):
+            scene_context = world_sub["summary"]
 
         for event_type, payload in self.actor.generate_stream(
             character_name=character.name,
@@ -1585,7 +1797,8 @@ class InteractionPipeline:
             goal=director_data["goal"],
             style=actor_style,
             user_input=user_message,
-            history_messages=history_messages or None,
+            scene_context=scene_context,        # [修复 1-C] 流式路径同步传入
+            history_messages=history_messages if history_messages else None,  # [EH-1 修复] 显式空值判断，避免空列表被替换为 None
         ):
             if event_type == "speech_delta":
                 actor_speech += payload
@@ -1618,17 +1831,48 @@ class InteractionPipeline:
             session_id=session_id,
         )
 
-        # jiwen + 记忆/遗忘系统 后处理钩子（异步）
+        # jiwen + 记忆/遗忘系统 后处理钩子（延迟到持久化完成后执行）
+        # [POST-1 修复] 流式管线的持久化是后台线程，conversation.id 在 yield done 时还拿不到。
+        # 这里启动一个独立的 daemon 线程，等持久化完成后用真实 id 调用 post_chat_hooks，
+        # 以保证记忆提取等需要 conversation_id 的钩子能正常执行。
         try:
             from backend.modules.post_chat import post_chat_hooks
-            post_chat_hooks(
-                character_id=character_id,
-                user_input=user_message,
-                npc_response=actor_speech,
-                emotion_label=director_data.get("emotion"),
-                conversation_id=None,  # 异步持久化，id 不可用，post_chat 会跳过 extract
-                run_in_background=True,
-            )
+
+            def _deferred_post_chat():
+                # 等待持久化结果出现：轮询 DB，最长等 2s
+                # [POST-1 修复] 持久化是后台线程，conversations 行还没插入时拿不到 id
+                from backend.database import SessionLocal as _SessionLocal
+                from backend.models import Conversation as _Conversation
+                conv_id: Optional[int] = None
+                for _ in range(20):
+                    time.sleep(0.1)
+                    try:
+                        with _SessionLocal() as check_db:
+                            q = check_db.query(_Conversation).filter(
+                                _Conversation.character_id == character_id,
+                                _Conversation.user_input == user_message,
+                            )
+                            if session_id is not None:
+                                q = q.filter(_Conversation.session_id == session_id)
+                            conv = q.order_by(_Conversation.id.desc()).first()
+                            if conv and conv.npc_response == actor_speech:
+                                conv_id = conv.id
+                                break
+                    except Exception:
+                        continue
+                try:
+                    post_chat_hooks(
+                        character_id=character_id,
+                        user_input=user_message,
+                        npc_response=actor_speech,
+                        emotion_label=director_data.get("emotion"),
+                        conversation_id=conv_id,  # 真实 id（拿不到时为 None，会跳过 extract）
+                        run_in_background=True,
+                    )
+                except Exception as _e:
+                    logger.warning("deferred post_chat_hooks dispatch 失败: %s", _e)
+
+            threading.Thread(target=_deferred_post_chat, daemon=True).start()
         except Exception as _e:
             logger.warning("post_chat_hooks dispatch 失败: %s", _e)
         _persist_ms = int((_time.monotonic() - _persist_start) * 1000)

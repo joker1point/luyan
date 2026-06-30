@@ -40,21 +40,91 @@ THEME_DECAY_CONFIG = {
 }
 
 
+# 默认遗忘阈值（strength 低于此值 → forgotten=1）
+DEFAULT_SHOULD_FORGET_THRESHOLD: float = 0.5
+
+
+def get_theme_decay_config(
+    db: "Session" = None,
+    character_id: Optional[int] = None,
+) -> Dict[str, tuple]:
+    """
+    获取主题衰减配置（默认值 + 角色级覆盖）
+
+    Args:
+        db: SQLAlchemy session（可选，传入时尝试从 character.config 读取覆盖）
+        character_id: 角色 ID（可选）
+
+    Returns:
+        {theme: (base_decay_rate, min_half_life_days, max_half_life_days)}
+    """
+    config: Dict[str, tuple] = dict(THEME_DECAY_CONFIG)
+    if db is not None and character_id is not None:
+        try:
+            from backend.models import Character
+            import json as _json
+            char = db.query(Character).filter(Character.id == character_id).first()
+            if char and char.config:
+                cfg = _json.loads(char.config)
+                decay_cfg = cfg.get("decay", {}) or {}
+                themes_override = decay_cfg.get("themes", {}) or {}
+                for theme, params in themes_override.items():
+                    if theme in config and isinstance(params, dict):
+                        config[theme] = (
+                            params.get("base_decay_rate", config[theme][0]),
+                            params.get("min_half_life_days", config[theme][1]),
+                            params.get("max_half_life_days", config[theme][2]),
+                        )
+        except Exception as e:
+            logger.debug("get_theme_decay_config 读取角色配置失败: %s", e)
+    return config
+
+
+def get_should_forget_threshold(
+    db: "Session" = None,
+    character_id: Optional[int] = None,
+    default: Optional[float] = None,
+) -> float:
+    """获取遗忘阈值（默认值 + 角色级覆盖）"""
+    threshold = default if default is not None else DEFAULT_SHOULD_FORGET_THRESHOLD
+    if db is not None and character_id is not None:
+        try:
+            from backend.models import Character
+            import json as _json
+            char = db.query(Character).filter(Character.id == character_id).first()
+            if char and char.config:
+                cfg = _json.loads(char.config)
+                decay_cfg = cfg.get("decay", {}) or {}
+                if "should_forget_threshold" in decay_cfg:
+                    threshold = decay_cfg["should_forget_threshold"]
+        except Exception as e:
+            logger.debug("get_should_forget_threshold 读取角色配置失败: %s", e)
+    return threshold
+
+
 # ======================================================================
 # 核心函数
 # ======================================================================
-def compute_half_life_days(importance: int, theme: Optional[str] = None) -> float:
+def compute_half_life_days(
+    importance: int,
+    theme: Optional[str] = None,
+    db: "Session" = None,
+    character_id: Optional[int] = None,
+) -> float:
     """
     根据 importance 和 theme 计算半衰期（天）。
 
     Args:
         importance: 1-10 重要性评分
         theme: 主题（identity/music/taste/moment/todo）
+        db: SQLAlchemy session（可选，传入时尝试从 character.config 读取覆盖）
+        character_id: 角色 ID（可选）
 
     Returns:
         半衰期天数（float）
     """
-    _, min_hl, max_hl = THEME_DECAY_CONFIG.get(theme or "default", THEME_DECAY_CONFIG["default"])
+    config = get_theme_decay_config(db, character_id)
+    _, min_hl, max_hl = config.get(theme or "default", config["default"])
     # importance 0-10 → multiplier 0.5 ~ 1.5
     importance = max(1, min(10, importance))
     multiplier = 0.5 + (importance - 1) * (1.0 / 9.0)  # 0.5 - 1.5
@@ -69,6 +139,8 @@ def compute_current_strength(
     recall_count: int = 0,
     theme: Optional[str] = None,
     now: Optional[datetime] = None,
+    db: "Session" = None,
+    character_id: Optional[int] = None,
 ) -> float:
     """
     计算当前 strength（衰减后）。
@@ -83,7 +155,10 @@ def compute_current_strength(
         theme: 主题
         now: 当前时间（用于测试，默认 utcnow）
     """
-    half_life = compute_half_life_days(importance, theme)
+    half_life = compute_half_life_days(
+        importance, theme,
+        db=db, character_id=character_id,
+    )
     if half_life <= 0:
         return 0.0
     decay_factor = 0.5 ** (age_days / half_life)
@@ -149,6 +224,12 @@ def run_decay_pass(
         {"scanned": N, "decayed": M, "forgotten": K}
     """
     now = now or datetime.now(timezone.utc).replace(tzinfo=None)  # SQLAlchemy 存的是 naive UTC
+
+    # 角色级 config 覆盖：threshold / theme decay rates
+    if character_id is not None and forgotten_threshold == 0.5:
+        # 默认 0.5 时才查角色 config；显式传入时优先用调用方的值
+        forgotten_threshold = get_should_forget_threshold(db, character_id)
+
     q = db.query(Memory)
     if character_id is not None:
         q = q.filter(Memory.character_id == character_id)
@@ -178,6 +259,8 @@ def run_decay_pass(
             age_days=age_days,
             recall_count=recall_count,
             theme=theme,
+            db=db,
+            character_id=character_id,
         )
         # strength 字段以 0-10 整数存储，向上/下取整
         new_int = int(round(new_strength))
@@ -302,4 +385,7 @@ __all__ = [
     "get_active_memories",
     "get_forgotten_ratio",
     "THEME_DECAY_CONFIG",
+    "DEFAULT_SHOULD_FORGET_THRESHOLD",
+    "get_theme_decay_config",
+    "get_should_forget_threshold",
 ]

@@ -63,17 +63,11 @@ class TestSqliteColumns:
 
     def test_non_sqlite_engine_returns_empty(self):
         """非 SQLite 的 engine 返回空列表"""
-        eng = create_engine("sqlite:///:memory:")
-        # 先 create_all 再关闭，用已 close 的 engine 模拟非 sqlite
-        eng.dispose()
-        # 用一个 dummy engine 测试
-        from sqlalchemy import create_engine as ce
-        # 给一个不存在的 postgresql 地址，engine 没有 backend_name 为 sqlite
-        # 但直接创建会报错。这里用 monkeypatch 的方式也不理想。
-        # 更优雅：用 已有的 engine，检查代码分支
-        # 实际 _sqlite_columns 内部用 engine.url.get_backend_name() 判断
-        # 如果 not sqlite，返回 []
-        result = _sqlite_columns(engine, "any_table")
+        # 用 mock 模拟非 sqlite engine，避免依赖真实 postgresql
+        from unittest.mock import MagicMock
+        fake_engine = MagicMock()
+        fake_engine.url.get_backend_name.return_value = "postgresql"
+        result = _sqlite_columns(fake_engine, "any_table")
         assert result == []
 
 
@@ -100,15 +94,25 @@ class TestMigrateV001:
     """v001 迁移的完整流程测试"""
 
     def test_fresh_database_no_migration_needed(self, engine):
-        """全新的数据库（conversations 表存在但无数据），迁移无操作"""
+        """全新的数据库（conversations 表存在但无数据），迁移无操作。
+
+        说明：engine fixture 已通过 Base.metadata.create_all 创建了完整 schema，
+        Conversation.session_id 列已存在，因此 migrate_v001_sessions 不会重复加列，
+        added_column 应为 False。测试名保留只是为了覆盖"无孤儿对话"的分支。
+        """
         result = migrate_v001_sessions(engine)
-        assert result["added_column"] is True  # 因为 Base 不会自动建 session_id 列
+        assert result["added_column"] is False  # create_all 已建 session_id 列
         assert result["backfilled"] == 0
 
     def test_adds_session_id_column(self, engine):
-        """确认 session_id 列被添加到 conversations 表"""
+        """确认 session_id 列存在于 conversations 表。
+
+        说明：engine fixture 调用了 Base.metadata.create_all，session_id 列已随表创建，
+        迁移函数不会重复 ALTER TABLE ADD COLUMN，故 added_column 为 False；
+        但列必须确实存在。
+        """
         result = migrate_v001_sessions(engine)
-        assert result["added_column"] is True
+        assert result["added_column"] is False
         cols = _sqlite_columns(engine, "conversations")
         assert "session_id" in cols
 
@@ -126,24 +130,27 @@ class TestMigrateV001:
         migrate_v001_sessions(engine)
 
         # 手动插入两个角色和它们的孤儿对话
+        # 注意：day_number 为 NOT NULL 列，必须显式提供（默认值仅在 ORM 层生效）
         with engine.begin() as conn:
             conn.execute(text(
-                "INSERT INTO characters (id, name, description) VALUES (1, '角色A', '描述A')"
+                "INSERT INTO characters (id, name, description, day_number) "
+                "VALUES (1, '角色A', '描述A', 1)"
             ))
             conn.execute(text(
-                "INSERT INTO characters (id, name, description) VALUES (2, '角色B', '描述B')"
+                "INSERT INTO characters (id, name, description, day_number) "
+                "VALUES (2, '角色B', '描述B', 1)"
             ))
             conn.execute(text(
-                "INSERT INTO conversations (character_id, user_input, npc_response) "
-                "VALUES (1, 'hi', 'hello')"
+                "INSERT INTO conversations (character_id, user_input, npc_response, is_proactive) "
+                "VALUES (1, 'hi', 'hello', 0)"
             ))
             conn.execute(text(
-                "INSERT INTO conversations (character_id, user_input, npc_response) "
-                "VALUES (1, 'how', 'fine')"
+                "INSERT INTO conversations (character_id, user_input, npc_response, is_proactive) "
+                "VALUES (1, 'how', 'fine', 0)"
             ))
             conn.execute(text(
-                "INSERT INTO conversations (character_id, user_input, npc_response) "
-                "VALUES (2, '你好', '你好')"
+                "INSERT INTO conversations (character_id, user_input, npc_response, is_proactive) "
+                "VALUES (2, '你好', '你好', 0)"
             ))
 
         result = migrate_v001_sessions(engine)

@@ -183,13 +183,14 @@ class TestWorldEngineTick:
     def test_tick_year_rollover(self, db_session):
         """day=365 推进到 day=1 + year+=1"""
         w = self._make_world(db_session, day=365, season="winter")
+        wid = w.id
         engine = WorldEngine(session_factory=lambda: db_session)
-        result = engine.tick_world(w.id, n=1)
+        result = engine.tick_world(wid, n=1)
         assert result["new_day"] == 1
         assert result["year_rollover"] is True
-        # 刷新验证 year
-        db_session.refresh(w)
-        assert w.year == 2
+        # tick_world 内部 _db() 会 close session，需重新查询
+        w2 = db_session.get(World, wid)
+        assert w2.year == 2
 
     def test_tick_season_change_emits_event(self, db_session):
         """day=59 → 60：winter → spring，应触发立春事件"""
@@ -227,10 +228,10 @@ class TestWorldEngineTick:
     def test_tick_persists_to_db(self, db_session):
         """tick 完后数据库应反映新 day/season"""
         w = self._make_world(db_session, day=59, season="winter")
+        wid = w.id  # tick_world 内部 _db() 会 close session，需提前捕获 id
         engine = WorldEngine(session_factory=lambda: db_session)
-        engine.tick_world(w.id, n=1)
-        db_session.expire_all()  # 重新加载
-        w2 = db_session.get(World, w.id)
+        engine.tick_world(wid, n=1)
+        w2 = db_session.get(World, wid)
         assert w2.day_of_year == 60
         assert w2.season == "spring"
 

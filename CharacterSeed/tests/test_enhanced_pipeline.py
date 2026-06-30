@@ -149,9 +149,14 @@ class TestEnhancedInteractionPipelineIntegration:
             )
     
     def test_run_basic_flow(self, pipeline_with_db):
-        """测试基本运行流程（无 LLM 调用）"""
+        """测试基本运行流程（无 LLM 调用）
+
+        [TEST-4 修复] 之前 Mock 了 base_pipeline.run()，只验证了 wrapper 不验证实际编排。
+        现改为使用真实基础管线 + patch LLMService 的 actor/director fallback 方法，
+        既能验证增强管线的记忆注入逻辑，又避免真实 LLM 调用。
+        """
         pipeline, db = pipeline_with_db
-        
+
         # 创建测试角色
         from backend.crud import character as character_crud
         character = character_crud.create_character(
@@ -161,36 +166,40 @@ class TestEnhancedInteractionPipelineIntegration:
             personality={"optimism": 50, "courage": 50},
             current_state={"location": "测试地点"}
         )
-        
-        # Mock 基础管线
+
+        # [TEST-4 修复] 用真实基础管线，patch LLM 调用点而非整个 run
+        from backend.modules.interaction import InteractionPipeline
+        real_base = InteractionPipeline()
+        pipeline.base_pipeline = real_base
+
         with patch.object(
-            pipeline.base_pipeline, 'run'
-        ) as mock_run:
-            mock_run.return_value = {
-                "id": 1,
-                "character_id": character.id,
-                "user_input": "你好",
-                "npc_response": "你好！很高兴认识你",
+            real_base.director, 'analyze_with_fallback',
+            return_value=({
                 "emotion": "开心",
+                "focus_memories": [],
+                "goal": "友好交谈",
+                "style": "温和",
+            }, "{}"),
+        ), patch.object(
+            real_base.actor, 'generate_with_fallback',
+            return_value=({
                 "action": "微笑",
                 "expression": "友善",
-                "director_raw": "{}",
-                "actor_raw": "{}",
-                "timestamp": None
-            }
-            
+                "speech": "你好！很高兴认识你",
+            }, "{}"),
+        ):
             result = pipeline.run(
                 character_id=character.id,
                 user_message="你好",
                 db=db,
                 user_id="test_user"
             )
-            
+
             # 验证基本字段
             assert result["user_input"] == "你好"
             assert result["npc_response"] == "你好！很高兴认识你"
-            
-            # 验证记忆统计已添加
+
+            # 验证记忆统计已添加（增强管线的核心增强点）
             assert "memory_stats" in result
             assert result["memory_stats"] is not None
             assert result["memory_stats"]["short_term_count"] == 2  # 一轮对话 = 2 条

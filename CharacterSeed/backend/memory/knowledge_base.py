@@ -203,6 +203,22 @@ class KnowledgeBase:
             tokens.append(cn_chars[i] + cn_chars[i + 1])
         return tokens
 
+    def search_sync(self, query: str, limit: int = 5) -> List[Dict[str, Any]]:
+        """
+        同步检索知识库（用于 sync 上下文调用 asyncio.run 会被事件循环拒绝的场景）。
+
+        优先用同步包装调用 async search；如处于运行中事件循环则降级到本地 _search_fallback。
+        """
+        import asyncio
+        try:
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # [CTX-1 修复] 在事件循环中 asyncio.run 会抛 RuntimeError，直接走 fallback
+                return self._search_fallback(query, limit)
+            return loop.run_until_complete(self.search(query, limit))
+        except RuntimeError:
+            return self._search_fallback(query, limit)
+
     def _search_fallback(self, query: str, limit: int) -> List[Dict[str, Any]]:
         """降级方案：基于分词的关键词匹配"""
         try:

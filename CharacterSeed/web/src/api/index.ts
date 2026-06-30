@@ -440,6 +440,87 @@ export const system = {
   health: () => request<{ message: string; docs: string; version: string }>('/'),
 }
 
+// ============================================================================
+// 10. Jiwen 角色参数（v008）
+// ============================================================================
+
+export interface JiwenRateItem {
+  key: string
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+}
+
+export interface JiwenParamsResponse {
+  character_id: number
+  jiwen: {
+    rates: Record<string, number>
+    thresholds: Record<string, number>
+    activities: Record<string, number>
+    fallback_templates: string[]
+    prompt_templates: Record<string, string>
+  }
+  decay: {
+    themes: Record<string, { base_decay_rate: number; min_half_life_days: number; max_half_life_days: number }>
+    should_forget_threshold: number
+  }
+  summary: {
+    min_messages_between: number
+    max_messages_between: number
+    forgotten_ratio_trigger: number
+    time_gap_days: number
+  }
+  session: {
+    reuse_window_hours: number
+  }
+}
+
+export const jiwen = {
+  getParams: (characterId: number) =>
+    request<JiwenParamsResponse>(`/jiwen/characters/${characterId}/params`),
+  updateParams: (characterId: number, params: Record<string, unknown>) =>
+    request<{ status: string; character_id: number }>(`/jiwen/characters/${characterId}/params`, {
+      method: 'PUT',
+      body: JSON.stringify(params),
+    }),
+}
+
+/**
+ * 主动消息相关 API（P1/Phase 2 - 配套 Q5）
+ * 与 jiwen_router 中 /api/jiwen/{cid}/proactive-messages/{mid}/consume 端点对应
+ */
+export const proactive = {
+  /** 消费一条主动消息（标记 consumed + 插入 conversations + 返回 session_id） */
+  consume: (characterId: number, messageId: number) =>
+    request<{
+      status: string
+      message_id: number
+      consumed: boolean
+      session_id: number
+      conversation_id: number
+      character_id: number
+    }>(`/jiwen/${characterId}/proactive-messages/${messageId}/consume`, {
+      method: 'POST',
+    }),
+
+  /** 列出某角色的主动消息队列（默认 unconsumed_only=true） */
+  list: (characterId: number, limit = 10, unconsumedOnly = true) =>
+    request<{
+      character_id: number
+      count: number
+      messages: Array<{
+        id: number
+        character_id: number
+        content: string
+        consumed: number
+        trigger_id: number
+        created_at: string
+      }>
+    }>(`/jiwen/${characterId}/proactive-messages?limit=${limit}&unconsumed_only=${unconsumedOnly}`),
+}
+
 /** 默认导出：聚合所有模块 */
 export const api = {
   characters,
@@ -451,6 +532,8 @@ export const api = {
   llmSettings,
   testTools,
   system,
+  jiwen,
+  proactive,
 }
 
 export default api

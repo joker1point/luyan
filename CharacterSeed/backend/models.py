@@ -34,6 +34,20 @@ class Character(Base):
     # v0.4 world pillar：所属世界 + 当前位置（外键，渐进替换 current_state.location 字符串）
     world_id = Column(Integer, ForeignKey("worlds.id", ondelete="SET NULL"), nullable=True)
     current_location_id = Column(Integer, ForeignKey("locations.id", ondelete="SET NULL"), nullable=True)
+    # v008: 角色级配置 JSON（jiwen/decay/summary/session 子键）
+    config = Column(Text, nullable=True)
+    # v009A: 外貌描述（JSON 字符串，10 字段——height/build/hair_color/.../overall_impression）
+    # 用途：给头像/视频生图提供精确的外貌 prompt（避免 LLM 只根据描述自由发挥）
+    appearance = Column(Text, nullable=True)
+    # v009B: 头像相关字段
+    avatar_url = Column(String(500), nullable=True)                 # 当前头像 URL（/avatars/{id}/selected/...）
+    avatar_candidates = Column(Text, nullable=True)                 # JSON 数组：候选图 URL 列表
+    avatar_selected_index = Column(Integer, default=0)              # 候选图中被选中的下标
+    avatar_video_url = Column(String(500), nullable=True)           # 视频头像 URL
+    avatar_video_status = Column(String(20), default="none")       # none / pending / generating / completed / failed
+    avatar_generation_prompt = Column(Text, nullable=True)          # 生图 prompt（调试用）
+    avatar_generated_at = Column(DateTime(timezone=True), nullable=True)  # 最近一次生成时间
+    avatar_video_prompt = Column(Text, nullable=True)               # 生视频 prompt
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
@@ -82,6 +96,7 @@ class Conversation(Base):
     expression = Column(String(100), nullable=True)
     director_raw = Column(Text, nullable=True)  # Director LLM原始响应
     actor_raw = Column(Text, nullable=True)  # Actor LLM原始响应
+    is_proactive = Column(Boolean, nullable=False, default=False, index=True)  # 是否为角色主动发起的消息
     timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
 
 

@@ -33,7 +33,15 @@ def get_creation_module():
 def get_pipeline():
     if "pipeline" not in _singletons:
         from backend.modules.interaction import InteractionPipeline
-        _singletons["pipeline"] = InteractionPipeline()
+        base = InteractionPipeline()
+        # [CTX-2 修复] 激活 EnhancedInteractionPipeline（三层记忆 + 语义检索）。
+        # 初始化失败时回退到基础管道，确保不影响核心对话能力。
+        try:
+            from backend.modules.enhanced_interaction import EnhancedInteractionPipeline
+            _singletons["pipeline"] = EnhancedInteractionPipeline(base_pipeline=base)
+        except Exception as e:
+            logger.warning("EnhancedInteractionPipeline 初始化失败，回退到基础管道: %s", e)
+            _singletons["pipeline"] = base
     return _singletons["pipeline"]
 
 

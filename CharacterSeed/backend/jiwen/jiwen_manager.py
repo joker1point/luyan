@@ -29,7 +29,7 @@ from typing import Any, Callable, Dict, List, Optional
 from sqlalchemy.orm import Session
 
 from backend.database import SessionLocal
-from backend.models import Character, JiwenState, JiwenTrigger, Memory, ProactiveMessage
+from backend.models import Character, ChatSession, Conversation, JiwenState, JiwenTrigger, Memory, ProactiveMessage
 from backend.jiwen.jiwen_core import JiwenEngine, JiwenStateSnapshot, create_jiwen
 
 logger = logging.getLogger(__name__)
@@ -152,10 +152,28 @@ class JiwenManager:
     # ----------------------------------------------------------
     @contextmanager
     def _db(self):
-        """统一的 session 上下文（生产用 SessionLocal，测试用注入的 factory）"""
+        """统一的 session 上下文（生产用 SessionLocal，测试用注入的 factory）
+
+        自动管理事务：正常退出时 commit，异常时 rollback。
+        使用 SAVEPOINT（begin_nested）隔离，回滚不会污染外层事务。
+
+        设计要点：
+          - 如果外层 session 已在事务中（如测试 fixture 的 autouse 事务），
+            begin_nested() 创建 SAVEPOINT，rollback 只回滚到 SAVEPOINT，
+            不影响外层事务。
+          - 如果外层没有事务（如生产 SessionLocal），begin_nested() 等价于 begin()，
+            rollback 回滚整个事务。
+        """
         db = self._session_factory()
         try:
-            yield db
+            # 使用 SAVEPOINT 隔离
+            with db.begin_nested():
+                yield db
+            # SAVEPOINT 正常 release
+        except Exception:
+            # SAVEPOINT 异常时自动 rollback
+            # 外层 session 状态保持不变
+            raise
         finally:
             try:
                 db.close()
@@ -187,6 +205,39 @@ class JiwenManager:
             if character_id in self._engines and not refresh:
                 return self._engines[character_id]
 
+            # v008: 若调用方未传 rates/thresholds，从 Character.config.jiwen 读取
+            prompt_ctx_template: Optional[str] = None
+            style_guide_template: Optional[str] = None
+            if rates is None or thresholds is None or True:
+                try:
+                    with self._db() as db:
+                        char = db.query(Character).filter(
+                            Character.id == character_id
+                        ).first()
+                        if char and char.config:
+                            cfg = json.loads(char.config)
+                            jiwen_cfg = (cfg.get("jiwen", {}) or {}) if isinstance(cfg, dict) else {}
+                            if rates is None:
+                                r = jiwen_cfg.get("rates")
+                                if isinstance(r, dict) and r:
+                                    rates = r
+                            if thresholds is None:
+                                t = jiwen_cfg.get("thresholds")
+                                if isinstance(t, dict) and t:
+                                    thresholds = t
+                            # v008 P2: prompt_templates 自定义（占位符替换）
+                            pt = jiwen_cfg.get("prompt_templates") or {}
+                            if isinstance(pt, dict):
+                                if isinstance(pt.get("context"), str) and pt["context"].strip():
+                                    prompt_ctx_template = pt["context"]
+                                if isinstance(pt.get("style"), str) and pt["style"].strip():
+                                    style_guide_template = pt["style"]
+                except Exception as e:
+                    logger.warning(
+                        "jiwen_manager: 读取 character config 失败 (char_id=%s): %s",
+                        character_id, e,
+                    )
+
             engine = create_jiwen(
                 character_id=character_id,
                 get_last_message=lambda cid=character_id: self._fetch_last_message(cid),
@@ -195,6 +246,16 @@ class JiwenManager:
                 thresholds=thresholds,
                 on_save=lambda state, cid=character_id: self._save_state_to_db(cid, state),
                 on_load=lambda cid=character_id: self._load_state_from_db(cid),
+                get_prompt_context_fn=(
+                    _build_template_prompt_context_fn(prompt_ctx_template)
+                    if prompt_ctx_template
+                    else None
+                ),
+                get_style_guidance_fn=(
+                    _build_template_style_guidance_fn(style_guide_template)
+                    if style_guide_template
+                    else None
+                ),
                 verbose=False,
             )
             engine.load()
@@ -258,46 +319,33 @@ class JiwenManager:
         trigger_ids: List[int],
     ) -> None:
         """
-        处理 contact 触发器：生成主动消息并入库
+        处理 contact 触发器：异步生成主动消息并入库
+
+        调用 dispatch_proactive_message()，内部通过后台事件循环
+        异步执行 LLM 生成（失败时 fallback 到硬编码模板）。
 
         Args:
             character_id: 角色 ID
             triggers: 触发器列表
             trigger_ids: 对应的触发器 ID 列表
         """
-        try:
-            with self._db() as db:
-                for i, t in enumerate(triggers):
-                    if t.get("action") == "contact" and i < len(trigger_ids):
-                        # 生成主动消息内容（基于状态）
-                        state = t.get("state_at_trigger", {})
-                        connection = state.get("connection", 0)
-                        pride = state.get("pride", 0)
+        from backend.modules.proactive import dispatch_proactive_message
 
-                        # 根据情绪状态生成不同的开场白
-                        if connection >= 0.5:
-                            if pride >= 0.3:
-                                content = "（嘴硬地）人呢？怎么不说话了？"
-                            else:
-                                content = "在忙吗？想找你聊聊。"
-                        elif connection >= 0.35:
-                            if pride >= 0.3:
-                                content = "（犹豫了一下）...在吗？"
-                            else:
-                                content = "最近怎么样？"
-                        else:
-                            content = "嘿，有空吗？"
-
-                        # 入库
-                        msg = ProactiveMessage(
-                            character_id=character_id,
-                            content=content,
-                            trigger_id=trigger_ids[i],
-                        )
-                        db.add(msg)
-                db.commit()
-        except Exception as e:
-            logger.warning("jiwen _handle_contact_triggers 失败: %s", e)
+        for i, t in enumerate(triggers):
+            if t.get("action") == "contact" and i < len(trigger_ids):
+                try:
+                    state = t.get("state_at_trigger", {})
+                    dispatch_proactive_message(
+                        character_id=character_id,
+                        trigger_state=state,
+                        trigger_id=trigger_ids[i],
+                        session_factory=self._session_factory,
+                    )
+                except Exception as e:
+                    logger.warning(
+                        "jiwen _handle_contact_triggers 失败: character=%d, trigger_id=%d, error=%s",
+                        character_id, trigger_ids[i], e,
+                    )
 
     def tick_all_active(self) -> Dict[int, List[Dict[str, Any]]]:
         """
@@ -362,7 +410,7 @@ class JiwenManager:
                 else:
                     for k, v in fields.items():
                         setattr(row, k, v)
-                db.commit()
+                # _db() 退出时自动 commit
         except Exception as e:
             logger.warning("jiwen _save_state_to_db 失败: %s", e)
 
@@ -401,7 +449,7 @@ class JiwenManager:
                     db.add(row)
                     db.flush()  # 获取 ID
                     trigger_ids.append(row.id)
-                db.commit()
+                # _db() 退出时自动 commit
         except Exception as e:
             logger.warning("jiwen _persist_triggers 失败: %s", e)
         return trigger_ids
@@ -429,7 +477,15 @@ class JiwenManager:
     def apply_delta(self, character_id: int, delta: Dict[str, float]) -> None:
         """聊天后调整状态"""
         engine = self.get_engine(character_id)
+        # [SYNC-1 修复] apply 前 re-read 最新状态，避免对话期间 scheduler tick 覆盖
+        engine.load()
         engine.apply_delta(delta)
+        engine.save()
+
+    def reset_connection(self, character_id: int) -> None:
+        """归零 connection（用户回复主动消息时调用）"""
+        engine = self.get_engine(character_id)
+        engine.reset_connection()
         engine.save()
 
     def set_activity(self, character_id: int, activity_type: str, label: Optional[str] = None) -> None:
@@ -514,7 +570,7 @@ class JiwenManager:
             return []
 
     def consume_proactive_message(self, message_id: int) -> bool:
-        """标记主动消息为已消费"""
+        """标记主动消息为已消费（简单版本，不写入 conversations）"""
         try:
             with self._db() as db:
                 msg = db.query(ProactiveMessage).filter(
@@ -522,12 +578,162 @@ class JiwenManager:
                 ).first()
                 if msg:
                     msg.consumed = 1
-                    db.commit()
+                    # _db() 退出时自动 commit
                     return True
                 return False
         except Exception as e:
             logger.warning("jiwen consume_proactive_message 失败: %s", e)
             return False
+
+    def consume_and_insert(self, message_id: int) -> Optional[Dict[str, Any]]:
+        """
+        消费主动消息并写入 conversations 表（同一事务）。
+
+        流程：
+        1. 获取主动消息（含幂等性检查：如果已消费，查已有 conversation）
+        2. find_or_create_session（复用最近 24h 的 session 或新建）
+        3. 先插入 Conversation（如果失败，consumed 不变 → 可重试）
+        4. 再标记 consumed（事务原子性：插入+标记 一起提交）
+        5. 返回 session_id 和 conversation_id
+
+        幂等性保护：
+        - 如果消息已消费，查询 conversations 表是否有对应记录
+        - 有 → 返回已有结果（幂等）
+        - 无 → 返回 None（数据异常）
+
+        Args:
+            message_id: 主动消息 ID
+
+        Returns:
+            {"session_id": int, "conversation_id": int, "character_id": int} 或 None
+        """
+        try:
+            with self._db() as db:
+                # 1. 获取主动消息
+                msg = db.query(ProactiveMessage).filter(
+                    ProactiveMessage.id == message_id,
+                ).first()
+                if not msg:
+                    logger.warning("consume_and_insert: 消息不存在 (id=%s)", message_id)
+                    return None
+
+                # 幂等性检查：如果已消费，返回已有 conversation
+                if msg.consumed == 1:
+                    existing_conv = db.query(Conversation).filter(
+                        Conversation.character_id == msg.character_id,
+                        Conversation.npc_response == msg.content,
+                        Conversation.is_proactive == True,
+                    ).order_by(Conversation.id.desc()).first()
+                    if existing_conv:
+                        logger.info(
+                            "consume_and_insert 幂等返回: message_id=%s, conversation_id=%s",
+                            message_id, existing_conv.id,
+                        )
+                        return {
+                            "session_id": existing_conv.session_id,
+                            "conversation_id": existing_conv.id,
+                            "character_id": msg.character_id,
+                            "content": msg.content,
+                        }
+                    logger.warning(
+                        "consume_and_insert: 消息已消费但找不到对应 conversation (id=%s)",
+                        message_id,
+                    )
+                    return None
+
+                # 2. find_or_create_session
+                session = self._find_or_create_session(db, msg.character_id)
+                # 关键：必须在 with 块内缓存需要的 ID，离开后 session/msg 会 detached
+                character_id = msg.character_id
+                content = msg.content
+                session_id = session.id  # int 类型，detached 后仍可读
+
+                # 3. 先插入 Conversation（如果失败，整个事务回滚，consumed 不变）
+                conv = Conversation(
+                    character_id=character_id,
+                    session_id=session_id,
+                    user_input="",  # 主动消息无用户输入
+                    npc_response=content,
+                    is_proactive=True,
+                )
+                db.add(conv)
+                db.flush()  # 提前暴露 SQL 约束错误（而非等到 commit）
+                conv_id = conv.id  # int 类型，detached 后仍可读
+
+                # 4. 再标记 consumed（与 Conversation 插入在同一事务中）
+                msg.consumed = 1
+
+                # _db() 退出时自动 commit
+            # 离开 with 块 → db 已 close，所有 ORM 对象 detached
+            # 但 int 字段（id）已缓存，可安全使用
+
+            # 事务已提交
+            logger.info(
+                "consume_and_insert 成功: message_id=%s, session_id=%s, conversation_id=%s",
+                message_id, session_id, conv_id,
+            )
+
+            return {
+                "session_id": session_id,
+                "conversation_id": conv_id,
+                "character_id": character_id,
+                "content": content,
+            }
+        except Exception as e:
+            logger.error("consume_and_insert 失败: %s", e, exc_info=True)
+            return None
+
+    def _find_or_create_session(self, db: Session, character_id: int) -> ChatSession:
+        """
+        复用最近 N 小时内的 session；超过则新建（默认 24h，可角色级 config 覆盖）
+
+        Args:
+            db: 数据库 session
+            character_id: 角色 ID
+
+        Returns:
+            ChatSession 实例
+        """
+        from datetime import datetime, timedelta
+
+        # v008: 从 Character.config.session.reuse_window_hours 读取窗口
+        reuse_hours = 24
+        try:
+            char = db.query(Character).filter(Character.id == character_id).first()
+            if char and char.config:
+                cfg = json.loads(char.config)
+                session_cfg = (cfg.get("session", {}) or {}) if isinstance(cfg, dict) else {}
+                if "reuse_window_hours" in session_cfg:
+                    reuse_hours = session_cfg["reuse_window_hours"]
+        except Exception as e:
+            logger.debug("读取 reuse_window_hours 失败 (char_id=%s): %s", character_id, e)
+
+        # 查询最近 N 小时内的 session
+        cutoff_time = datetime.utcnow() - timedelta(hours=reuse_hours)
+        recent_session = db.query(ChatSession).filter(
+            ChatSession.character_id == character_id,
+            ChatSession.updated_at >= cutoff_time,
+        ).order_by(ChatSession.updated_at.desc()).first()
+
+        if recent_session:
+            logger.debug("复用最近 session: id=%s, character_id=%s", recent_session.id, character_id)
+            return recent_session
+
+        # 新建 session — 标题格式：角色名 · MM-DD HH:MM
+        character = db.query(Character).filter(Character.id == character_id).first()
+        character_name = character.name if character else "未知角色"
+        local_time = datetime.now().strftime("%m-%d %H:%M")
+        title = f"{character_name} · {local_time}"
+
+        new_session = ChatSession(
+            character_id=character_id,
+            title=title,
+        )
+        db.add(new_session)
+        db.flush()  # 获取 ID
+        logger.info("新建 session: id=%s, character_id=%s, title=%s",
+                    new_session.id, character_id, title)
+        return new_session
 
 
 # ======================================================================
@@ -542,6 +748,53 @@ def _parse_iso(s: str) -> Optional[datetime]:
         return dt
     except Exception:
         return None
+
+
+# ======================================================================
+# Prompt template helpers (v008 P2)
+# ======================================================================
+# JiwenStateSnapshot 字段占位符映射（state_attr → snapshot field）
+_TEMPLATE_PLACEHOLDER_ATTRS = (
+    "connection", "pride", "valence", "arousal", "immersion",
+)
+
+
+def _render_template(template: str, state) -> str:
+    """
+    用 JiwenStateSnapshot 字段值替换 {field} 占位符。
+
+    示例：
+      template = "连接度={connection}, 傲慢={pride}"
+      → "连接度=0.50, 傲慢=0.20"
+    """
+    try:
+        mapping = {
+            attr: f"{getattr(state, attr, 0.0):.2f}"
+            for attr in _TEMPLATE_PLACEHOLDER_ATTRS
+        }
+        return template.format(**mapping)
+    except Exception:
+        # 任何占位符错误 → 原样返回（避免 500）
+        return template
+
+
+def _build_template_prompt_context_fn(template: str):
+    """
+    基于模板字符串构建 get_prompt_context 回调。
+    模板使用 {connection} / {pride} / {valence} / {arousal} / {immersion} 占位符。
+    """
+    def _fn(state) -> str:
+        return _render_template(template, state)
+    return _fn
+
+
+def _build_template_style_guidance_fn(template: str):
+    """
+    基于模板字符串构建 get_style_guidance 回调。占位符同上。
+    """
+    def _fn(state) -> str:
+        return _render_template(template, state)
+    return _fn
 
 
 # ======================================================================

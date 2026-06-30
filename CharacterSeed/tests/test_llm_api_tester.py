@@ -68,7 +68,8 @@ class TestJoinUrl:
         assert _join_url("https://api.openai.com/v1/", "/v1/chat/completions") == "https://api.openai.com/v1/chat/completions"
 
     def test_empty_suffix(self):
-        assert _join_url("https://api.openai.com", "") == "https://api.openai.com"
+        # 生产实现：base.rstrip("/") + "/" + "".lstrip("/") → 末尾会补一个 "/"
+        assert _join_url("https://api.openai.com", "") == "https://api.openai.com/"
 
     def test_trailing_slash_base(self):
         assert _join_url("https://api.openai.com/v1/", "/v1/models") == "https://api.openai.com/v1/models"
@@ -279,16 +280,20 @@ class TestStreamLatency:
     def test_stream_latency_success(self, mock_post, monkeypatch, tmp_path):
         monkeypatch.setattr("backend.services.llm_settings_store._SETTINGS_DIR", str(tmp_path))
         monkeypatch.setattr("backend.services.llm_settings_store._SETTINGS_FILE", str(tmp_path / "llm_settings.json"))
+        # 关键：清空 _cache，避免其他测试用例的缓存污染
+        monkeypatch.setattr("backend.services.llm_settings_store._cache", None)
 
         resp = MagicMock(spec=Response)
         resp.ok = True
         resp.status_code = 200
         resp.text = ""
         resp.reason = "OK"
+        # 生产代码调用 iter_lines(decode_unicode=True) 返回 str；
+        # mock 必须返回 str 而非 bytes，否则 buffer += raw_chunk + "\n" 触发 TypeError
         resp.iter_lines.return_value = iter([
-            b"data: {\"choices\": [{\"delta\": {\"content\": \"你好\"}, \"finish_reason\": null}]}\n\n",
-            b"data: {\"choices\": [{\"delta\": {\"content\": \"世界\"}, \"finish_reason\": null}]}\n\n",
-            b"data: {\"choices\": [{\"delta\": {}, \"finish_reason\": \"stop\"}]}\n\n",
+            "data: {\"choices\": [{\"delta\": {\"content\": \"你好\"}, \"finish_reason\": null}]}\n\n",
+            "data: {\"choices\": [{\"delta\": {\"content\": \"世界\"}, \"finish_reason\": null}]}\n\n",
+            "data: {\"choices\": [{\"delta\": {}, \"finish_reason\": \"stop\"}]}\n\n",
         ])
         mock_post.return_value = resp
 

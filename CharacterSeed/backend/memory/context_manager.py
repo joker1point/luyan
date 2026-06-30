@@ -150,12 +150,11 @@ class ContextManager:
         
         # 3. 知识库（RAG 检索）
         if include_knowledge:
-            # 注意：cognee 检索是异步的，这里需要特殊处理
-            # 在实际使用时应该用 async
+            # [CTX-1 修复] 之前用 asyncio.run() 在事件循环中会报 RuntimeError;
+            # 改为 KnowledgeBase.search_sync()，由 KB 自行处理运行中事件循环
             try:
-                import asyncio
-                knowledge_results = asyncio.run(
-                    self.knowledge.search(current_query, limit=self.knowledge_limit)
+                knowledge_results = self.knowledge.search_sync(
+                    current_query, limit=self.knowledge_limit
                 )
                 context["knowledge"] = knowledge_results
                 context["metadata"]["sources"].append("knowledge_base")

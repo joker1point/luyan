@@ -28,7 +28,7 @@ def test_list_characters_returns_all(client, sample_character, sample_character_
     data = r.json()
     assert len(data) == 2
     names = {c["name"] for c in data}
-    assert names == {"苏晴", "陆远"}
+    assert names == {"苏晴", "李墨"}
 
 
 def test_list_characters_pagination(client, sample_character, sample_character_2):
@@ -183,7 +183,7 @@ def test_polish_description_success(client, mock_creation_module):
     )
     assert r.status_code == 200, r.text
     body = r.json()
-    assert body["polished"] == "润色后的描述（mock）"
+    assert body["polished"] == "润色后的描述文本"
     assert body["original"] == "一个老师"
 
 

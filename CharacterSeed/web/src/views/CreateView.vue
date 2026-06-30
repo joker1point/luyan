@@ -163,13 +163,18 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { characters as charactersApi, ApiError } from '@/api'
 import { useCharacters } from '@/composables/useCharacters'
 import { safeJsonParse } from '@/utils'
+import type { ToastShowFn } from '@/composables/useToast'
 import type { Character, PersonalityMap, CurrentState } from '@/types'
 
 const { refresh: refreshList, setActive } = useCharacters()
+
+const showToast = inject<ToastShowFn>('showToast')
+const router = useRouter()
 
 const mode = ref<'text' | 'file'>('text')
 const description = ref('')
@@ -212,8 +217,18 @@ async function submit() {
     await refreshList()
     description.value = ''
     storyFile.value = null
+
+    // 成功反馈
+    showToast?.(`角色「${created.name}」创建成功！`, 'success', 2500)
+
+    // 1.5s 后自动跳转到对话页
+    setTimeout(() => {
+      router.push('/chat')
+    }, 1500)
   } catch (e) {
-    error.value = e instanceof ApiError ? e.detail : (e as Error).message
+    const msg = e instanceof ApiError ? e.detail : (e as Error).message
+    error.value = msg
+    showToast?.(`创建失败：${msg}`, 'error', 4000)
   } finally {
     submitting.value = false
   }

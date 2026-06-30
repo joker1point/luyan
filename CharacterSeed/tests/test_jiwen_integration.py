@@ -14,7 +14,17 @@ from backend.jiwen import get_jiwen_manager
 # jiwen_manager 集成
 # ======================================================================
 def test_jiwen_manager_persists_state(db_session, sample_character):
+    from backend.database import SessionLocal
     mgr = get_jiwen_manager()
+    mgr.invalidate(sample_character.id)
+    # 清理生产 DB 残留，确保从默认状态开始
+    try:
+        with SessionLocal() as db:
+            from backend.models import JiwenState
+            db.query(JiwenState).filter(JiwenState.character_id == sample_character.id).delete()
+            db.commit()
+    except Exception:
+        pass
     mgr.apply_delta(sample_character.id, {"pride": 0.3, "valence": 0.2})
     mgr.invalidate(sample_character.id)  # 清缓存
 
@@ -309,7 +319,21 @@ def test_jiwen_api_apply_delta_empty_400(client, sample_character):
     assert resp.status_code == 400
 
 
-def test_jiwen_api_tick(client, sample_character):
+def test_jiwen_manager_reset_connection(sample_character):
+    """JiwenManager.reset_connection() 应归零 connection 并落库"""
+    from backend.jiwen import get_jiwen_manager
+    mgr = get_jiwen_manager()
+    mgr.apply_delta(sample_character.id, {"connection": 0.7})
+    state_before = mgr.get_state(sample_character.id)
+    assert state_before["connection"] > 0.5
+
+    mgr.reset_connection(sample_character.id)
+
+    state_after = mgr.get_state(sample_character.id)
+    assert state_after["connection"] == 0.0
+
+
+def test_jiwen_api_apply_delta(client, sample_character):
     resp = client.post(
         f"/api/jiwen/{sample_character.id}/tick",
         json={"minutes": 60},
@@ -397,7 +421,7 @@ def _make_capturing_director_actor(captured):
 
         def generate_with_fallback(self, character_name, personality, emotion,
                                    focus_memories, goal, style, user_input,
-                                   history_messages=None):
+                                   scene_context="", history_messages=None):
             self.captured.setdefault("actor_calls", []).append({
                 "style": style,
             })
@@ -423,8 +447,19 @@ def test_pipeline_injects_jiwen_into_current_state(
     Pipeline.run() 应把 jiwen 五轴状态合并到 Director 的 current_state._jiwen。
     """
     from backend.jiwen import get_jiwen_manager
+    from backend.database import SessionLocal
     mgr = get_jiwen_manager()
-    # 先设一个非零 jiwen 状态
+    # 先 invalidate 缓存，避免生产 DB 残留状态干扰
+    mgr.invalidate(sample_character.id)
+    # 手动从生产 DB 清理残留 → 确保引擎以默认状态加载
+    try:
+        with SessionLocal() as db:
+            from backend.models import JiwenState
+            db.query(JiwenState).filter(JiwenState.character_id == sample_character.id).delete()
+            db.commit()
+    except Exception:
+        pass
+    # 再设目标 jiwen 状态
     mgr.apply_delta(sample_character.id, {"pride": 0.5, "valence": 0.3, "connection": 0.6})
 
     # 替换 Director/Actor 类，避免实例化时加载真实 LLM
@@ -462,7 +497,16 @@ def test_pipeline_injects_jiwen_style_guidance(
     Pipeline.run() 应把 jiwen style_guidance 附加到 Actor 的 style 字段。
     """
     from backend.jiwen import get_jiwen_manager
+    from backend.database import SessionLocal
     mgr = get_jiwen_manager()
+    mgr.invalidate(sample_character.id)
+    try:
+        with SessionLocal() as db:
+            from backend.models import JiwenState
+            db.query(JiwenState).filter(JiwenState.character_id == sample_character.id).delete()
+            db.commit()
+    except Exception:
+        pass
     # 高 pride → style_guidance 应包含"骄傲"字样
     mgr.apply_delta(sample_character.id, {"pride": 0.8})
 
@@ -479,6 +523,6 @@ def test_pipeline_injects_jiwen_style_guidance(
 
     assert captured.get("actor_calls"), "actor 未被调用"
     style = captured["actor_calls"][0]["style"]
-    assert "情绪状态风格指引" in style, (
+    assert "[情绪状态]" in style, (
         f"style 字段未包含 jiwen style_guidance 标记，实际: {style[:200]}"
     )

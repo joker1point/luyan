@@ -164,13 +164,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { inject, onMounted, reactive, ref } from 'vue'
 import { llmSettings as llmApi, testTools, ApiError } from '@/api'
 import type { LLMSettingsResponse, ModelItem, LLMTestResponse, LatencyTestResponse } from '@/types'
+import type { ToastShowFn } from '@/composables/useToast'
+
+const showToast = inject<ToastShowFn>('showToast')
 
 const settings = ref<LLMSettingsResponse | null>(null)
 const providers = ref<{ id: string; name: string; needs_key: string }[]>([])
 const models = ref<ModelItem[]>([])
+
+// v008: 从后端拉取的 provider 默认值（替代前端硬编码的 _PROVIDER_DEFAULTS）
+const providerDefaults = ref<Record<string, { base_url: string; model: string }>>({})
 
 const loading = ref(false)
 const saving = ref(false)
@@ -184,7 +190,8 @@ const testResult = ref<LLMTestResponse | null>(null)
 const latencyResult = ref<LatencyTestResponse | null>(null)
 
 const form = reactive({
-  active_provider: 'deepseek',
+  // v008: 不再硬编码 'deepseek'，由 loadAll() 从后端拉取
+  active_provider: '' as string,
   active_config: { api_key: '', base_url: '', model: '' },
   default_temperature: 0.7,
   default_max_tokens: 1000,
@@ -198,6 +205,7 @@ async function loadAll() {
     const [s, p] = await Promise.all([llmApi.get(), llmApi.providers()])
     settings.value = s
     providers.value = p.providers
+    providerDefaults.value = p.defaults || {}
     syncForm(s)
   } catch (e) {
     error.value = e instanceof ApiError ? e.detail : (e as Error).message
@@ -220,7 +228,7 @@ function selectProvider(id: string) {
   form.active_provider = id
   // 修复：之前直接用 settings.providers[id]，如果是 masked 空对象（未配置过的 provider），
   //       base_url/model 会是空串，保存时会覆盖掉默认值导致 LLMService reload 失败。
-  // 解决：base_url/model 永远从 PROVIDER_DEFAULTS 或已有值兜底。
+  // 解决：base_url/model 永远从 providerDefaults 或已有值兜底。
   const stored = settings.value.providers[id] || { api_key: '', base_url: '', model: '' }
   const baseUrl = (stored.base_url && stored.base_url.trim()) || defaultBaseUrl(id)
   const model = (stored.model && stored.model.trim()) || defaultModel(id)
@@ -234,21 +242,12 @@ function selectProvider(id: string) {
   latencyResult.value = null
 }
 
-// 前端兜底：与后端 PROVIDER_DEFAULTS 保持一致（防止后端默认值更新后这里不一致）
-// 注意：base_url/model 兜底在后端已实现；这里只是"切到空 provider 时表单显示默认值"
-const _PROVIDER_DEFAULTS: Record<string, { base_url: string; model: string }> = {
-  deepseek: { base_url: 'https://api.deepseek.com', model: 'deepseek-chat' },
-  qwen:     { base_url: 'https://dashscope.aliyuncs.com/compatible-mode/v1', model: 'qwen-turbo' },
-  zhipu:    { base_url: 'https://open.bigmodel.cn/api/paas/v4', model: 'glm-4-flash' },
-  ollama:   { base_url: 'http://localhost:11434/v1', model: 'qwen2.5:7b' },
-  openai:   { base_url: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
-  agnes:    { base_url: 'https://apihub.agnes-ai.com/v1', model: 'agnes-1.5-flash' },
-}
+// v008: 从后端拉取的 defaults 中取值（不再前端硬编码）
 function defaultBaseUrl(id: string): string {
-  return _PROVIDER_DEFAULTS[id]?.base_url ?? ''
+  return providerDefaults.value[id]?.base_url ?? ''
 }
 function defaultModel(id: string): string {
-  return _PROVIDER_DEFAULTS[id]?.model ?? ''
+  return providerDefaults.value[id]?.model ?? ''
 }
 
 async function onSave() {
@@ -275,9 +274,11 @@ async function onSave() {
     })
     settings.value = updated
     syncForm(updated)
-    window.alert('已保存')
+    showToast?.('LLM 设置已保存', 'success', 2000)
   } catch (e) {
-    error.value = e instanceof ApiError ? e.detail : (e as Error).message
+    const msg = e instanceof ApiError ? e.detail : (e as Error).message
+    error.value = msg
+    showToast?.(`保存失败：${msg}`, 'error', 4000)
   } finally {
     saving.value = false
   }
@@ -297,8 +298,15 @@ async function onTest() {
       test_prompt: form.test_prompt,
     })
     testResult.value = r
+    if (r.success) {
+      showToast?.(`连接测试成功 (${r.model}, ${r.latency_ms}ms)`, 'success', 2500)
+    } else {
+      showToast?.(`连接测试失败：${r.message || '未知错误'}`, 'error', 4000)
+    }
   } catch (e) {
-    error.value = e instanceof ApiError ? e.detail : (e as Error).message
+    const msg = e instanceof ApiError ? e.detail : (e as Error).message
+    error.value = msg
+    showToast?.(`连接测试失败：${msg}`, 'error', 4000)
   } finally {
     testing.value = false
   }
@@ -317,8 +325,11 @@ async function onLatency() {
       model: form.active_config.model,
     })
     latencyResult.value = r
+    showToast?.(`延迟测试完成 TTFT=${r.ttft_ms}ms`, 'info', 2000)
   } catch (e) {
-    error.value = e instanceof ApiError ? e.detail : (e as Error).message
+    const msg = e instanceof ApiError ? e.detail : (e as Error).message
+    error.value = msg
+    showToast?.(`延迟测试失败：${msg}`, 'error', 4000)
   } finally {
     testingLatency.value = false
   }

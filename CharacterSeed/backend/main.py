@@ -219,12 +219,49 @@ def startup_event():
                 logger.info("[migration] %s", h)
     except Exception as e:
         logger.exception("迁移失败: %s", e)
-    # 2.5) 启动 jiwen 后台 tick 调度器（默认 5 分钟一次）
+    # 2.5) 启动 jiwen 后台 tick 调度器（CRITICAL_MODULE — 默认 5 分钟一次）
+    # 降级不会停止调度器，只会降低 tick 频率。详见 jiwen_scheduler.set_mode
     try:
-        from backend.jiwen import start_scheduler
-        start_scheduler(interval_seconds=300)
+        from backend.jiwen import start_scheduler, get_scheduler
+        start_scheduler(
+            interval_seconds=300,
+            degraded_interval=900,   # 降级间隔 15 分钟
+            recovery_interval=300,   # 恢复间隔 5 分钟
+            mode='normal',
+        )
+        # 验证启动成功（CRITICAL_MODULE 必须可用）
+        sched = get_scheduler()
+        assert sched._is_running, "jiwen scheduler 启动失败"
+        assert sched.is_critical, "jiwen scheduler 必须是关键模块"
+        logger.info(
+            "[CRITICAL_MODULE] jiwen scheduler 已启动，"
+            "interval=%ds, degraded=%ds, recovery=%ds",
+            sched.interval_seconds,
+            sched.degraded_interval_seconds,
+            sched.recovery_interval_seconds,
+        )
     except Exception as e:
-        logger.warning("jiwen scheduler 启动失败: %s", e)
+        # CRITICAL_MODULE 启动失败：记录后仍允许服务运行（避免完全宕机）
+        # 但会被 /api/health/jiwen 暴露为 unhealthy
+        logger.exception("jiwen scheduler 启动失败（CRITICAL_MODULE）: %s", e)
+    # 2.6) v009: 初始化头像存储目录 + 预热 AvatarGenerationService 单例
+    try:
+        from backend.services.avatar_generation_service import (
+            STORAGE_ROOT, AvatarGenerationService,
+        )
+        STORAGE_ROOT.mkdir(parents=True, exist_ok=True)
+        logger.info("[startup] 头像存储目录已就绪: %s", STORAGE_ROOT)
+        # 预热：避免首次生成时才创建 client 失败（Agnes key 缺失时立即暴露）
+        try:
+            AvatarGenerationService.instance()
+            logger.info("[startup] AvatarGenerationService 单例已初始化")
+        except Exception as e:
+            logger.warning(
+                "AvatarGenerationService 预热失败（AGNES_API_KEY 缺失？头像功能将不可用）: %s",
+                e,
+            )
+    except Exception as e:
+        logger.warning("初始化头像目录失败: %s", e)
     # 3) 记录一条 INFO 启动事件（自监控）
     try:
         LoggingService.instance().record(
@@ -299,8 +336,48 @@ def root(request: Request):
     }
 
 
+@app.get("/api/health/jiwen")
+def jiwen_health():
+    """
+    jiwen 关键模块健康检查。
+    降级不会让 jiwen 不健康，但停止或异常会标记为 unhealthy。
+    """
+    from backend.jiwen import get_scheduler
+    try:
+        sched = get_scheduler()
+        s = sched.status()
+        # 健康：调度器在跑 + is_critical=True
+        healthy = s.get("is_running", False) and s.get("is_critical", False)
+        return {
+            "module": "jiwen",
+            "is_critical": s.get("is_critical", False),
+            "status": "healthy" if healthy else "unhealthy",
+            "is_running": s.get("is_running", False),
+            "mode": s.get("mode", "normal"),
+            "interval_seconds": s.get("interval_seconds"),
+            "degraded_interval_seconds": s.get("degraded_interval_seconds"),
+            "recovery_interval_seconds": s.get("recovery_interval_seconds"),
+            "last_run_at": s.get("last_run_at"),
+        }
+    except Exception as e:
+        return {
+            "module": "jiwen",
+            "status": "unhealthy",
+            "error": str(e),
+        }
+
+
 # ==================== 前端静态文件挂载 ====================
 # 优先级低于 /api 路由（已注册的 API 路由优先匹配）
+# v009: 角色头像存储目录（与 react-vite/web dist 同级；StaticFiles 直读）
+_AVATAR_DIR = _PROJECT_ROOT / "usercontext" / "avatars"
+_AVATAR_DIR.mkdir(parents=True, exist_ok=True)
+app.mount(
+    "/avatars",
+    StaticFiles(directory=str(_AVATAR_DIR)),
+    name="avatars",
+)
+
 if _WEB_DIST.exists():
     app.mount(
         "/assets",

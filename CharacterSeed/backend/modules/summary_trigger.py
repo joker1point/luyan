@@ -13,12 +13,15 @@
   - 上限 100：避免累积太多
   - 下限 20：避免过频
   - forgotten_ratio > 0.3：当前主题已大量"被遗忘"，需要重新摘要整合
+
+v008 扩展：阈值可按角色 config 覆盖（Character.config.summary.*）
 """
 from __future__ import annotations
 
+import json
 import logging
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from sqlalchemy.orm import Session
 
@@ -34,6 +37,40 @@ MIN_MESSAGES_BETWEEN = 20
 MAX_MESSAGES_BETWEEN = 100
 FORGOTTEN_RATIO_TRIGGER = 0.3
 TIME_GAP_DAYS = 7
+
+
+def get_summary_config(
+    db: Session,
+    character_id: int,
+) -> Dict[str, Any]:
+    """
+    获取角色的摘要配置（默认值 + 角色级覆盖）
+
+    Returns:
+        {
+            "min_messages_between": int,
+            "max_messages_between": int,
+            "forgotten_ratio_trigger": float,
+            "time_gap_days": int,
+        }
+    """
+    cfg: Dict[str, Any] = {
+        "min_messages_between": MIN_MESSAGES_BETWEEN,
+        "max_messages_between": MAX_MESSAGES_BETWEEN,
+        "forgotten_ratio_trigger": FORGOTTEN_RATIO_TRIGGER,
+        "time_gap_days": TIME_GAP_DAYS,
+    }
+    try:
+        char = db.query(Character).filter(Character.id == character_id).first()
+        if char and char.config:
+            data = json.loads(char.config)
+            summary_cfg = (data.get("summary", {}) or {}) if isinstance(data, dict) else {}
+            for key in cfg.keys():
+                if key in summary_cfg:
+                    cfg[key] = summary_cfg[key]
+    except Exception as e:
+        logger.debug("get_summary_config 读取角色配置失败: %s", e)
+    return cfg
 
 
 def should_summarize(
@@ -93,21 +130,28 @@ def should_summarize(
     else:
         time_since = 999.0
 
+    # 角色级 config 覆盖
+    summary_cfg = get_summary_config(db, character_id)
+    min_msg = summary_cfg["min_messages_between"]
+    max_msg = summary_cfg["max_messages_between"]
+    forgotten_trigger = summary_cfg["forgotten_ratio_trigger"]
+    time_gap_days = summary_cfg["time_gap_days"]
+
     should = False
     reason = ""
 
-    if msg_count_since_last >= MAX_MESSAGES_BETWEEN:
+    if msg_count_since_last >= max_msg:
         should = True
-        reason = f"msg_count_overflow ({msg_count_since_last} >= {MAX_MESSAGES_BETWEEN})"
-    elif msg_count_since_last < MIN_MESSAGES_BETWEEN:
+        reason = f"msg_count_overflow ({msg_count_since_last} >= {max_msg})"
+    elif msg_count_since_last < min_msg:
         should = False
-        reason = f"msg_count_too_few ({msg_count_since_last} < {MIN_MESSAGES_BETWEEN})"
-    elif forgotten_ratio > FORGOTTEN_RATIO_TRIGGER:
+        reason = f"msg_count_too_few ({msg_count_since_last} < {min_msg})"
+    elif forgotten_ratio > forgotten_trigger:
         should = True
-        reason = f"forgotten_ratio ({forgotten_ratio:.2f} > {FORGOTTEN_RATIO_TRIGGER})"
-    elif time_since > TIME_GAP_DAYS:
+        reason = f"forgotten_ratio ({forgotten_ratio:.2f} > {forgotten_trigger})"
+    elif time_since > time_gap_days:
         should = True
-        reason = f"time_gap ({time_since:.1f} days > {TIME_GAP_DAYS})"
+        reason = f"time_gap ({time_since:.1f} days > {time_gap_days})"
     else:
         should = False
         reason = "no trigger"
@@ -300,6 +344,7 @@ __all__ = [
     "build_summary",
     "create_summary",
     "get_active_summaries",
+    "get_summary_config",
     "MIN_MESSAGES_BETWEEN",
     "MAX_MESSAGES_BETWEEN",
     "FORGOTTEN_RATIO_TRIGGER",

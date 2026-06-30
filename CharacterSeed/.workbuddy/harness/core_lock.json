@@ -1,0 +1,78 @@
+{
+  "_schema": "1.0",
+  "_description": "核心逻辑锁定清单。标记为 locked 的代码段不可被 AI 修改，修改须人工审批解锁。",
+  "_updated": "2026-06-29T17:24:00+08:00",
+
+  "locked_modules": [
+    {
+      "id": "LOCK-001",
+      "name": "数据库迁移系统",
+      "files": ["backend/services/db_migration.py"],
+      "functions": ["run_all_migrations", "migrate_v001_sessions", "migrate_v002_event_and_character_fields", "migrate_v003_world_pillar", "migrate_v004_location_dual_write", "migrate_v005_memory_enhance", "migrate_v006_soul_md", "migrate_v007_is_proactive", "migrate_v008_character_config"],
+      "rationale": "迁移系统是数据一致性的最后防线。任何错误都会导致生产数据不可恢复的损坏。"
+    },
+    {
+      "id": "LOCK-002",
+      "name": "ORM 模型定义",
+      "files": ["backend/models.py"],
+      "classes": ["Character", "Conversation", "ChatSession", "Memory", "JiwenState", "JiwenTrigger", "ProactiveMessage", "Event", "World", "Location", "Item", "Relationship"],
+      "rationale": "ORM 模型变更涉及数据库 schema 变更，需配套迁移脚本。AI 修改模型字段须同时提供迁移方案并经人工审查。"
+    },
+    {
+      "id": "LOCK-003",
+      "name": "Jiwen 核心算法",
+      "files": ["backend/jiwen/jiwen_core.py"],
+      "functions": ["JiwenEngine.tick", "JiwenEngine.check_thresholds", "JiwenEngine.apply_delta", "JiwenEngine.reset_connection", "JiwenEngine.set_activity", "JiwenEngine.set_user_status"],
+      "rationale": "Jiwen 五轴引擎是角色行为模拟的数学核心。漂移率/阈值/触发逻辑的任何修改都需人工验证。"
+    },
+    {
+      "id": "LOCK-004",
+      "name": "LLM 服务层",
+      "files": ["backend/services/llm_service.py"],
+      "functions": ["LLMService.call", "LLMService.call_with_messages", "LLMService.call_with_messages_stream", "LLMService.reload_config"],
+      "rationale": "LLM 调用是系统最昂贵的资源。重试逻辑/超时/fallback 的变更直接影响成本和可用性。"
+    },
+    {
+      "id": "LOCK-005",
+      "name": "对话管线核心 (Director+Actor)",
+      "files": ["backend/modules/interaction.py"],
+      "functions": ["DirectorModule.analyze", "DirectorModule.analyze_with_fallback", "ActorModule.generate", "ActorModule.generate_with_fallback", "InteractionPipeline.run", "InteractionPipeline.run_stream"],
+      "rationale": "双 LLM 管路是核心对话体验的关键路径。Prompt 模板/世界注入/fallback 逻辑影响所有对话质量。"
+    },
+    {
+      "id": "LOCK-006",
+      "name": "Jiwen 管理器",
+      "files": ["backend/jiwen/jiwen_manager.py"],
+      "functions": ["JiwenManager.get_or_create_engine", "JiwenManager.tick_character", "JiwenManager.consume_and_insert", "JiwenManager._find_or_create_session", "JiwenManager._db"],
+      "rationale": "Jiwen 管理器是引擎与持久化的桥梁。SAVEPOINT 事务逻辑变更可能导致数据不一致。"
+    },
+    {
+      "id": "LOCK-007",
+      "name": "FastAPI 应用入口",
+      "files": ["backend/main.py"],
+      "functions": ["lifespan"],
+      "rationale": "启动/关闭生命周期管理。路由注册、中间件、迁移执行、调度器启动。"
+    },
+    {
+      "id": "LOCK-008",
+      "name": "LLM 设置持久化",
+      "files": ["backend/services/llm_settings_store.py"],
+      "functions": ["LLMSettingsStore.update_provider", "LLMSettingsStore.mask_api_key", "LLMSettingsStore.get_provider_with_env_fallback"],
+      "rationale": "API Key 脱敏和持久化是安全关键路径。"
+    }
+  ],
+
+  "locked_files": [
+    "backend/services/db_migration.py",
+    "backend/models.py",
+    "backend/jiwen/jiwen_core.py",
+    "backend/services/llm_service.py",
+    "backend/modules/interaction.py",
+    "backend/jiwen/jiwen_manager.py",
+    "backend/main.py",
+    "backend/services/llm_settings_store.py"
+  ],
+
+  "_total_locks": 8,
+  "_total_locked_files": 8
+}

@@ -74,14 +74,18 @@
         </transition>
       </router-view>
     </main>
+
+    <ToastContainer :toasts="toasts" :dismiss="dismissToast" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref, computed, provide } from 'vue'
 import { useCharacters } from '@/composables/useCharacters'
 import { useTheme, type ThemeMode } from '@/composables/useTheme'
+import { useToast, type ToastShowFn } from '@/composables/useToast'
 import { system, ApiError } from '@/api'
+import ToastContainer from '@/components/ToastContainer.vue'
 
 const {
   characters,
@@ -93,6 +97,11 @@ const {
 } = useCharacters()
 
 const { mode, resolved, cycle: cycleTheme } = useTheme()
+
+const { toasts, show: showToast, dismiss: dismissToast } = useToast()
+
+// 暴露 showToast 给子组件
+provide<ToastShowFn>('showToast', showToast)
 
 const themeLabel = computed<string>(() => {
   if (mode.value === 'light') return '浅色'

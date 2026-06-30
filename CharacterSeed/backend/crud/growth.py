@@ -29,14 +29,14 @@ def create_growth_log(
     world_changes_json: Optional[str] = None,
 ):
     """创建成长记录（Day4 新增 schedule_json / world_changes_json）"""
+    # NOTE: schedule_json / world_changes_json 参数保留以兼容旧调用方，
+    # 但 GrowthLog 模型已移除这两列，故不再传入构造器。
     db_growth = GrowthLog(
         character_id=character_id,
         personality_delta=personality_delta,
         event_summary=event_summary,
         new_memories=new_memories,
         growth_raw=growth_raw,
-        schedule_json=schedule_json,
-        world_changes_json=world_changes_json,
     )
     db.add(db_growth)
     db.commit()

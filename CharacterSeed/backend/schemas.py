@@ -30,6 +30,17 @@ CHARACTER_WRITABLE_FIELDS = frozenset({
     "day_number",
     "world_id",             # FK → worlds.id
     "current_location_id",  # FK → locations.id
+    # v009A
+    "appearance",           # 外貌描述 JSON 字符串
+    # v009B 头像相关（PATCH 暴露以便用户/前端修正——如手动换选）
+    "avatar_url",
+    "avatar_candidates",    # JSON 数组字符串
+    "avatar_selected_index",
+    "avatar_video_url",
+    "avatar_video_status",
+    "avatar_generation_prompt",
+    "avatar_generated_at",
+    "avatar_video_prompt",
 })
 
 # 需要自动 JSON 序列化的字段（CRUD 层统一处理 dict/list → str）
@@ -39,6 +50,8 @@ CHARACTER_JSON_FIELDS = frozenset({
     "speaking_style",       # list[str]
     "values",               # list[str]
     "habits",               # list[str]
+    "appearance",           # dict（外貌）
+    "avatar_candidates",    # list[str]（候选图 URL 列表）
 })
 
 # 任何路径都不允许修改的字段（含主键、时间戳等）
@@ -108,6 +121,17 @@ class CharacterResponse(BaseModel):
     # [P0#1 一致性修复] 之前缺失，导致前端永远拿不到 world_id / current_location_id
     world_id: Optional[int] = None
     current_location_id: Optional[int] = None
+    # v009A 外貌描述
+    appearance: Optional[str] = None
+    # v009B 头像相关
+    avatar_url: Optional[str] = None
+    avatar_candidates: Optional[str] = None   # JSON 数组字符串
+    avatar_selected_index: Optional[int] = 0
+    avatar_video_url: Optional[str] = None
+    avatar_video_status: Optional[str] = "none"
+    avatar_generation_prompt: Optional[str] = None
+    avatar_generated_at: Optional[datetime] = None
+    avatar_video_prompt: Optional[str] = None
 
 
 # [P0#1 一致性修复] 新增通用更新请求 schema。
@@ -131,6 +155,17 @@ class CharacterUpdateRequest(BaseModel):
     day_number: Optional[int] = Field(None, ge=1)
     world_id: Optional[int] = None
     current_location_id: Optional[int] = None
+    # v009A 外貌
+    appearance: Optional[Any] = None
+    # v009B 头像（PATCH 暴露以便用户手动换选/重置）
+    avatar_url: Optional[str] = None
+    avatar_candidates: Optional[Any] = None  # JSON 数组
+    avatar_selected_index: Optional[int] = None
+    avatar_video_url: Optional[str] = None
+    avatar_video_status: Optional[str] = None
+    avatar_generation_prompt: Optional[str] = None
+    avatar_generated_at: Optional[datetime] = None
+    avatar_video_prompt: Optional[str] = None
 
     model_config = ConfigDict(
         # 允许 PATCH 时省略字段（None = 不修改）
@@ -463,7 +498,7 @@ class ConversationRow(BaseModel):
 # ChatRequest 增加可选的 session_id（向后兼容：None 时自动创建新 session）
 class ChatRequest(BaseModel):
     character_id: int
-    message: str
+    message: str = Field(..., max_length=5000, description="用户消息，最大 5000 字符")  # [PIPE-2 修复] 防止超大消息撑爆 LLM 上下文
     session_id: Optional[int] = None  # ← 新增
 
 

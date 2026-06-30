@@ -296,7 +296,7 @@ def patch_world(wid: int, body: WorldPatch, db: Session = Depends(get_db)) -> Di
     return _world_to_dict(w)
 
 
-@router.delete("/worlds/{wid}", status_code=204)
+@router.delete("/worlds/{wid}", status_code=204, response_model=None)
 def delete_world(wid: int, db: Session = Depends(get_db)) -> None:
     w = _get_world_or_404(db, wid)
     # 仅当无角色时允许删除
@@ -462,7 +462,7 @@ def patch_location(lid: int, body: LocationPatch, db: Session = Depends(get_db))
     return _location_to_dict(loc, db)
 
 
-@router.delete("/locations/{lid}", status_code=204)
+@router.delete("/locations/{lid}", status_code=204, response_model=None)
 def delete_location(lid: int, db: Session = Depends(get_db)) -> None:
     loc = _get_location_or_404(db, lid)
     # 1) 把子节点的 parent_id 设为 NULL（依赖外键 ON DELETE SET NULL 也可）
@@ -580,7 +580,7 @@ def patch_item(iid: int, body: ItemPatch, db: Session = Depends(get_db)) -> Dict
     return _item_to_dict(i)
 
 
-@router.delete("/items/{iid}", status_code=204)
+@router.delete("/items/{iid}", status_code=204, response_model=None)
 def delete_item(iid: int, db: Session = Depends(get_db)) -> None:
     i = _get_item_or_404(db, iid)
     db.delete(i)
@@ -653,7 +653,7 @@ def patch_relationship(
     return _relationship_to_dict(r)
 
 
-@router.delete("/relationships/{rid}", status_code=204)
+@router.delete("/relationships/{rid}", status_code=204, response_model=None)
 def delete_relationship(rid: int, db: Session = Depends(get_db)) -> None:
     r = _get_relationship_or_404(db, rid)
     db.delete(r)

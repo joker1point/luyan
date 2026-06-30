@@ -93,13 +93,13 @@ def test_list_events_empty(client, sample_character):
 
 def test_list_events_returns_all_ordered(client, sample_character, db):
     e1 = event_crud.create_event(
-        db, sample_character.id, day_number=1, order_index=0, content="晨读",
+        db, sample_character.id, day_number=1, order_index=0, event_type="schedule_action", content="晨读",
     )
     e2 = event_crud.create_event(
-        db, sample_character.id, day_number=1, order_index=1, content="午餐",
+        db, sample_character.id, day_number=1, order_index=1, event_type="schedule_action", content="午餐",
     )
     e3 = event_crud.create_event(
-        db, sample_character.id, day_number=2, order_index=0, content="远足",
+        db, sample_character.id, day_number=2, order_index=0, event_type="schedule_action", content="远足",
     )
     db.commit()
 
@@ -111,9 +111,9 @@ def test_list_events_returns_all_ordered(client, sample_character, db):
 
 
 def test_list_events_filter_by_day(client, sample_character, db):
-    event_crud.create_event(db, sample_character.id, day_number=1, order_index=0, content="d1")
-    event_crud.create_event(db, sample_character.id, day_number=2, order_index=0, content="d2")
-    event_crud.create_event(db, sample_character.id, day_number=2, order_index=1, content="d2-2")
+    event_crud.create_event(db, sample_character.id, day_number=1, order_index=0, event_type="schedule_action", content="d1")
+    event_crud.create_event(db, sample_character.id, day_number=2, order_index=0, event_type="schedule_action", content="d2")
+    event_crud.create_event(db, sample_character.id, day_number=2, order_index=1, event_type="schedule_action", content="d2-2")
     db.commit()
 
     r = client.get(
@@ -126,10 +126,10 @@ def test_list_events_filter_by_day(client, sample_character, db):
 
 def test_list_events_filter_by_status(client, sample_character, db):
     event_crud.create_event(
-        db, sample_character.id, day_number=1, order_index=0, content="p1", status="pending",
+        db, sample_character.id, day_number=1, order_index=0, event_type="schedule_action", content="p1", status="pending",
     )
     event_crud.create_event(
-        db, sample_character.id, day_number=1, order_index=1, content="c1", status="completed",
+        db, sample_character.id, day_number=1, order_index=1, event_type="schedule_action", content="c1", status="completed",
     )
     db.commit()
 
@@ -154,7 +154,7 @@ def test_advance_event_success(client, sample_character, db, monkeypatch):
     """fake EventManager 返回一个 Event 行，路由直接透传。"""
     pending = event_crud.create_event(
         db, sample_character.id, day_number=1, order_index=0,
-        content="pending event", status="pending",
+        event_type="schedule_action", content="pending event", status="pending",
     )
     db.commit()
 
@@ -321,8 +321,9 @@ def test_auto_with_completed_events(client, sample_character, db, monkeypatch):
     """auto 返回带 completed_events + iterate_result 的结构化响应。"""
     e = event_crud.create_event(
         db, sample_character.id, day_number=1, order_index=0,
-        content="event", status="completed", result_json="{}",
+        event_type="schedule_action", content="event", status="completed",
     )
+    e.result_json = "{}"
     db.commit()
 
     auto_dict = {

@@ -166,6 +166,30 @@ def _run_hooks_sync(
 
     # 1) jiwen applyDelta
     try:
+        # P7: 检测用户是否回复了主动消息（上一条 assistant 消息 is_proactive=True）
+        is_reply_to_proactive = False
+        if conversation_id:
+            try:
+                with sf() as db:
+                    current_conv = db.query(Conversation).filter(
+                        Conversation.id == conversation_id
+                    ).first()
+                    if current_conv and current_conv.session_id:
+                        # 查找同 session 中上一条 assistant 消息
+                        prev_msg = db.query(Conversation).filter(
+                            Conversation.session_id == current_conv.session_id,
+                            Conversation.id < conversation_id,
+                            Conversation.is_proactive == True,
+                        ).order_by(Conversation.timestamp.desc()).first()
+                        if prev_msg:
+                            is_reply_to_proactive = True
+            except Exception:
+                pass
+
+        if is_reply_to_proactive:
+            logger.info("post_chat: 用户回复了主动消息，重置 connection")
+            get_jiwen_manager().reset_connection(character_id)
+
         delta = infer_emotion_delta(user_input, npc_response, emotion_label)
         if delta:
             get_jiwen_manager().apply_delta(character_id, delta)

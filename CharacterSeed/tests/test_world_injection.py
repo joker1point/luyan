@@ -109,7 +109,7 @@ class TestGetStyleGuidance:
 
     def test_weather_guidance_via_mock(self, monkeypatch, db_session, sample_character):
         """8 种天气 → 8 句不同短句（通过 mock world_engine.generate_weather）"""
-        from backend.world import location_aware
+        from backend.world import world_engine as we_mod
         w = World(name="w", season="spring", day_of_year=100, year=1)
         db_session.add(w)
         db_session.commit()
@@ -123,7 +123,7 @@ class TestGetStyleGuidance:
         db_session.commit()
         engine = WorldEngine(session_factory=lambda: db_session)
 
-        # 逐个 patch 验证（monkeypatch 切回原函数 → 切到新值）
+        # 逐个 patch 验证：直接 monkeypatch world_engine 模块里的 generate_weather 引用
         for weather, expected_substr in [
             ("rainy", "雨"),
             ("stormy", "雷雨"),
@@ -134,23 +134,8 @@ class TestGetStyleGuidance:
             ("foggy", "雾"),
             ("clear", "天空"),
         ]:
-            # mock location_aware 里的 engine（get_world_engine 走单例，已注入 TestingSessionLocal）
-            # 通过 monkeypatch location_aware 模块的 generate_weather
-            from backend.world import season_calendar
-            original = season_calendar.generate_weather
-            monkeypatch.setattr(season_calendar, "generate_weather", lambda *a, **kw: weather)
-            # world_engine 内部 import 了 generate_weather，需要重 import 拿到新引用
-            # 用 importlib.reload
-            import importlib
-            from backend.world import world_engine as we_mod
-            importlib.reload(we_mod)
-            # location_aware 通过 get_world_engine 拿单例，单例仍指向原 WorldEngine
-            # WorldEngine 内部已经 import 了 generate_weather（reload 前）
-            # 因此也要 reload world_engine 让它重新 import
+            monkeypatch.setattr(we_mod, "generate_weather", lambda *a, **kw: weather)
             s = get_style_guidance(sample_character.id, engine=engine)
-            monkeypatch.setattr(season_calendar, "generate_weather", original)
-            # reload we_mod 恢复
-            importlib.reload(we_mod)
             assert expected_substr in s, f"expected '{expected_substr}' in '{s}' (weather={weather})"
 
     @pytest.mark.parametrize("season,expected_substr", [
@@ -171,7 +156,7 @@ class TestGetStyleGuidance:
 
     def test_combined_weather_and_season(self, monkeypatch, db_session, sample_character):
         """天气+季节 → 短句拼接（2 句）"""
-        from backend.world import season_calendar
+        from backend.world import world_engine as we_mod
         w = World(name="combo", season="winter", day_of_year=1, year=1)
         db_session.add(w)
         db_session.flush()
@@ -181,18 +166,10 @@ class TestGetStyleGuidance:
         sample_character.world_id = w.id
         sample_character.current_location_id = loc.id
         db_session.commit()
-        # 直接通过 season_calendar 模块层 monkeypatch + reload world_engine
-        original = season_calendar.generate_weather
-        monkeypatch.setattr(season_calendar, "generate_weather", lambda *a, **kw: "snowy")
-        import importlib
-        from backend.world import world_engine as we_mod
-        importlib.reload(we_mod)
-        try:
-            engine = WorldEngine(session_factory=lambda: db_session)
-            s = get_style_guidance(sample_character.id, engine=engine)
-        finally:
-            monkeypatch.setattr(season_calendar, "generate_weather", original)
-            importlib.reload(we_mod)
+        # 直接 monkeypatch world_engine 模块里的 generate_weather 引用
+        monkeypatch.setattr(we_mod, "generate_weather", lambda *a, **kw: "snowy")
+        engine = WorldEngine(session_factory=lambda: db_session)
+        s = get_style_guidance(sample_character.id, engine=engine)
         # 雪 + 冬
         assert "雪" in s
         assert "冬" in s
@@ -334,8 +311,11 @@ class TestWorldPillarE2E:
         db_session.refresh(char)
 
         # 4) tick 1 天（59→60，应触发立春）
+        # tick_world 内部 _db() 会 close session，提前捕获 id 避免后续 DetachedInstanceError
+        world_id = world.id
+        char_id = char.id
         engine = WorldEngine(session_factory=lambda: db_session)
-        result = engine.tick_world(world.id, n=1)
+        result = engine.tick_world(world_id, n=1)
         assert result["new_season"] == "spring"
         assert result["season_changed"] is True
         assert len(result["events_created"]) == 1
@@ -345,14 +325,14 @@ class TestWorldPillarE2E:
         from backend.models import WorldEvent
         events = (
             db_session.query(WorldEvent)
-            .filter(WorldEvent.world_id == world.id)
+            .filter(WorldEvent.world_id == world_id)
             .all()
         )
         assert len(events) == 1
         assert events[0].title == "立春"
 
         # 6) 验证 context 返回
-        ctx = engine.get_context_for_character(char.id)
+        ctx = engine.get_context_for_character(char_id)
         assert ctx["world"]["season"] == "spring"
         assert ctx["world"]["day"] == 60
         assert ctx["location"]["name"] == "高三(2)班"
@@ -365,13 +345,13 @@ class TestWorldPillarE2E:
         assert any(e["title"] == "立春" for e in ctx["recent_events"])
 
         # 7) 验证 build_world_subfield 注入格式
-        sub = build_world_subfield(char.id, engine=engine)
+        sub = build_world_subfield(char_id, engine=engine)
         assert sub["summary"]
         assert "立春" in sub["summary"]
         assert "高三(2)班" in sub["summary"]
 
         # 8) 验证 style_guidance 有内容（季节+天气）
         from backend.world import get_style_guidance
-        style = get_style_guidance(char.id, engine=engine)
+        style = get_style_guidance(char_id, engine=engine)
         # 春季或天气相关短句
         assert "春" in style or "天气" in style or style == "" or len(style) > 0

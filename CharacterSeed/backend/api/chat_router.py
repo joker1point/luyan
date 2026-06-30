@@ -31,6 +31,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.models import Character
 from backend.schemas import ChatRequest, ChatResponse
 from backend.state import get_pipeline
 
@@ -79,6 +80,11 @@ def chat_stream(request: ChatRequest, db: Session = Depends(get_db)):
     流式对话接口（SSE — Server-Sent Events）。
     与 /api/chat 的区别：Actor LLM 使用 stream=True，首 token 到达即推送给前端。
     """
+    # [PIPE-3 修复] 在 yield 首个事件前预检查角色，避免 HTTP 200 + error event 误导客户端
+    character = db.query(Character).filter(Character.id == request.character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail=f"角色不存在: id={request.character_id}")
+
     def event_generator():
         try:
             for event_type, payload in get_pipeline().run_stream(

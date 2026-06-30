@@ -50,11 +50,15 @@ import json
 import time
 import unittest
 import argparse
+import pytest
 from unittest.mock import patch, MagicMock
 from io import BytesIO
 
 # 确保项目根目录在 sys.path 中
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+# frontend.api_client 模块已移除，跳过整个测试文件
+pytestmark = pytest.mark.skip(reason="frontend.api_client 模块已移除")
 
 # ============================================================
 # 命令行参数解析

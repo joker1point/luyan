@@ -82,7 +82,8 @@ class TestDeriveTitle:
         assert title == "你好，请自我介绍"
 
     def test_long_message_truncated(self):
-        long_msg = "这是一段非常非常长的消息超过了三十个字符限制应该被截断吧"
+        # 生产代码：len(s) <= max_len(30) 时不截断；必须 > 30 才会截断加 "…"
+        long_msg = "这是一段非常非常长的消息超过了三十个字符限制应该被截断吧确实超长了需要截断处理"
         title = chat_session_crud.derive_title_from_message(long_msg)
         assert len(title) <= 30
         assert title.endswith("…")
@@ -222,6 +223,11 @@ class TestListSessions:
     def test_list_multiple(self, db_session, character):
         s1 = chat_session_crud.create_session(db_session, character.id, title="A")
         s2 = chat_session_crud.create_session(db_session, character.id, title="B")
+        # 显式 touch s2，确保它的 updated_at 严格大于 s1（SQLite 秒级精度下
+        # 连续创建可能落入同一秒，order_by desc 排序不稳定）
+        import time
+        time.sleep(1.1)
+        chat_session_crud.touch_session(db_session, s2.id)
         sessions = chat_session_crud.list_sessions(db_session, character.id)
         # 默认按 updated_at 倒序，所以 B 应在 A 之前
         assert len(sessions) == 2

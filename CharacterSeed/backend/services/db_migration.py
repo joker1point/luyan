@@ -254,6 +254,149 @@ def migrate_v006_soul_md(engine: Engine) -> dict:
     return result
 
 
+def migrate_v007_is_proactive(engine: Engine) -> dict:
+    """
+    迁移 v007：给 conversations 表新增 is_proactive 列（标记角色主动发起的消息）
+
+    Returns:
+        {"added_column": bool}
+    """
+    result = {"added_column": False}
+
+    if not _sqlite_table_exists(engine, "conversations"):
+        return result
+
+    cols = _sqlite_columns(engine, "conversations")
+    if "is_proactive" in cols:
+        logger.debug("迁移 v007: conversations.is_proactive 已存在，跳过")
+        return result
+
+    logger.info("迁移 v007: 添加 conversations.is_proactive 列")
+    with engine.begin() as conn:
+        conn.execute(text(
+            "ALTER TABLE conversations ADD COLUMN is_proactive BOOLEAN NOT NULL DEFAULT 0"
+        ))
+        conn.execute(text(
+            "CREATE INDEX IF NOT EXISTS ix_conversations_is_proactive "
+            "ON conversations(is_proactive)"
+        ))
+    result["added_column"] = True
+    logger.info("迁移 v007 完成: 新增列=%s", result["added_column"])
+    return result
+
+
+def migrate_v008_character_config(engine: Engine) -> dict:
+    """
+    迁移 v008：给 characters 表新增 config 列（角色级配置 JSON）
+
+    config JSON 子结构：
+      jiwen: { rates, thresholds, activities, fallback_templates, prompt_templates }
+      decay: { themes, should_forget_threshold }
+      summary: { min_messages_between, max_messages_between,
+                 forgotten_ratio_trigger, time_gap_days }
+      session: { reuse_window_hours }
+    """
+    result = {"added_column": False}
+
+    if not _sqlite_table_exists(engine, "characters"):
+        return result
+
+    cols = _sqlite_columns(engine, "characters")
+    if "config" in cols:
+        logger.debug("迁移 v008: characters.config 已存在，跳过")
+        return result
+
+    logger.info("迁移 v008: 添加 characters.config 列")
+    with engine.begin() as conn:
+        conn.execute(text(
+            "ALTER TABLE characters ADD COLUMN config TEXT"
+        ))
+    result["added_column"] = True
+    logger.info("迁移 v008 完成: 新增列=%s", result["added_column"])
+    return result
+
+
+def migrate_v009A_character_appearance(engine: Engine) -> dict:
+    """
+    迁移 v009A：给 characters 表新增 appearance 列（外貌描述 JSON）
+
+    字段格式：JSON 字符串，包含 10 个子字段——
+    height / build / hair_color / hair_style / eye_color /
+    skin_tone / clothing / accessories / distinctive_features / overall_impression
+
+    Returns:
+        {"added_column": bool}
+    """
+    result = {"added_column": False}
+
+    if not _sqlite_table_exists(engine, "characters"):
+        return result
+
+    cols = _sqlite_columns(engine, "characters")
+    if "appearance" in cols:
+        logger.debug("迁移 v009A: characters.appearance 已存在，跳过")
+        return result
+
+    logger.info("迁移 v009A: 添加 characters.appearance 列")
+    with engine.begin() as conn:
+        conn.execute(text(
+            "ALTER TABLE characters ADD COLUMN appearance TEXT"
+        ))
+    result["added_column"] = True
+    logger.info("迁移 v009A 完成: 新增列=%s", result["added_column"])
+    return result
+
+
+def migrate_v009B_character_avatar(engine: Engine) -> dict:
+    """
+    迁移 v009B：给 characters 表新增头像相关列（v009 头像生成系统）
+
+    新增列：
+      - avatar_url             : 当前头像 URL（StaticFiles 路径）
+      - avatar_candidates      : 候选图 URL 列表（JSON 数组字符串）
+      - avatar_selected_index  : 候选图中被选中的下标
+      - avatar_video_url       : 视频头像 URL
+      - avatar_video_status    : none / pending / generating / completed / failed
+      - avatar_generation_prompt: 生图 prompt（调试用）
+      - avatar_generated_at    : 最近一次生成时间
+      - avatar_video_prompt    : 生视频 prompt
+
+    Returns:
+        {"added_columns": int}
+    """
+    result = {"added_columns": 0}
+
+    if not _sqlite_table_exists(engine, "characters"):
+        return result
+
+    cols = _sqlite_columns(engine, "characters")
+    new_cols = [
+        ("avatar_url",              "VARCHAR(500)"),
+        ("avatar_candidates",       "TEXT"),
+        ("avatar_selected_index",   "INTEGER DEFAULT 0"),
+        ("avatar_video_url",        "VARCHAR(500)"),
+        ("avatar_video_status",     "VARCHAR(20) DEFAULT 'none'"),
+        ("avatar_generation_prompt","TEXT"),
+        ("avatar_generated_at",     "DATETIME"),
+        ("avatar_video_prompt",     "TEXT"),
+    ]
+    with engine.begin() as conn:
+        for col_name, col_type in new_cols:
+            if col_name in cols:
+                continue
+            logger.info("迁移 v009B: 添加 characters.%s 列", col_name)
+            conn.execute(text(
+                f"ALTER TABLE characters ADD COLUMN {col_name} {col_type}"
+            ))
+            result["added_columns"] += 1
+
+    logger.info(
+        "迁移 v009B 完成: 新增列=%d",
+        result["added_columns"],
+    )
+    return result
+
+
 def run_all_migrations(engine: Engine) -> List[dict]:
     """
     按版本顺序执行所有迁移。在应用启动时调用一次。
@@ -283,6 +426,22 @@ def run_all_migrations(engine: Engine) -> List[dict]:
     history.append({
         "version": "v006_soul_md",
         **migrate_v006_soul_md(engine),
+    })
+    history.append({
+        "version": "v007_is_proactive",
+        **migrate_v007_is_proactive(engine),
+    })
+    history.append({
+        "version": "v008_character_config",
+        **migrate_v008_character_config(engine),
+    })
+    history.append({
+        "version": "v009A_character_appearance",
+        **migrate_v009A_character_appearance(engine),
+    })
+    history.append({
+        "version": "v009B_character_avatar",
+        **migrate_v009B_character_avatar(engine),
     })
     return history
 

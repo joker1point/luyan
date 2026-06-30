@@ -1,0 +1,293 @@
+{
+  "_schema": "1.0",
+  "_description": "已完成功能注册表。AI 修改任何条目所覆盖的文件前，必须运行 pre_change_check.py 进行冲突检测。",
+  "_updated": "2026-06-29T17:24:00+08:00",
+
+  "features": [
+    {
+      "id": "F001",
+      "name": "角色创建管线",
+      "description": "文本/文件输入→LLM生成→DB持久化→前端预览",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/character_router.py",
+        "backend/modules/creation.py",
+        "backend/crud/character.py",
+        "web/src/views/CreateView.vue"
+      ],
+      "tests": [
+        "tests/test_character_router.py",
+        "tests/test_creation.py"
+      ],
+      "entry_points": ["POST /api/characters/create", "POST /api/characters/polish"]
+    },
+
+    {
+      "id": "F002",
+      "name": "对话交互管线 (Director+Actor)",
+      "description": "双LLM架构：Director注意力聚焦 + Actor行为生成，含世界场景注入",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/modules/interaction.py",
+        "backend/api/chat_router.py",
+        "backend/crud/conversation.py",
+        "web/src/views/ChatView.vue"
+      ],
+      "tests": [
+        "tests/test_chat_router.py",
+        "tests/test_enhanced_pipeline.py"
+      ],
+      "entry_points": ["POST /api/chat", "POST /api/chat/stream"],
+      "notes": "DDD-003 修复：Actor {scene_context} 占位符已修复，World/Event 数据已注入"
+    },
+
+    {
+      "id": "F003",
+      "name": "Jiwen 情绪引擎",
+      "description": "五轴连续状态 + 数学漂移 + 阈值触发 + 后台调度器",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/jiwen/jiwen_core.py",
+        "backend/jiwen/jiwen_manager.py",
+        "backend/jiwen/jiwen_scheduler.py"
+      ],
+      "tests": [
+        "tests/test_jiwen_core.py",
+        "tests/test_jiwen_integration.py"
+      ],
+      "entry_points": [
+        "GET /api/jiwen/characters",
+        "GET /api/jiwen/{id}/state",
+        "POST /api/jiwen/{id}/tick",
+        "POST /api/jiwen/{id}/delta",
+        "POST /api/jiwen/{id}/activity",
+        "GET /api/jiwen/{id}/prompt-context",
+        "GET /api/jiwen/{id}/style-guidance"
+      ],
+      "notes": "v008 参数可配置化已完成，prideRegression 等 21 个参数支持角色级覆盖"
+    },
+
+    {
+      "id": "F004",
+      "name": "Jiwen 参数配置 API",
+      "description": "GET/PUT /api/jiwen/characters/{id}/params，22+6 参数角色级覆盖 + DB 持久化",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/jiwen_router.py",
+        "backend/models.py",
+        "backend/services/db_migration.py",
+        "web/src/components/JiwenConfigPanel.vue"
+      ],
+      "tests": [],
+      "entry_points": [
+        "GET /api/jiwen/characters/{id}/params",
+        "PUT /api/jiwen/characters/{id}/params"
+      ],
+      "notes": "关联 DB 迁移 v008 (Character.config 列)"
+    },
+
+    {
+      "id": "F005",
+      "name": "主动消息系统 (Proactive)",
+      "description": "Jiwen 触发→LLM/模板生成→SSE推送→前端消费→自动创建Session→插入Conversation",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/modules/proactive.py",
+        "backend/api/jiwen_router.py"
+      ],
+      "tests": [],
+      "entry_points": [
+        "GET /api/jiwen/proactive/stream",
+        "GET /api/jiwen/{id}/proactive-messages",
+        "POST /api/jiwen/{id}/proactive-messages/{msg_id}/consume"
+      ],
+      "notes": "事务安全 (SAVEPOINT + 幂等保护) 已验收，fallback 模板支持角色级配置"
+    },
+
+    {
+      "id": "F006",
+      "name": "数据库迁移系统",
+      "description": "v001-v008 幂等迁移链，支持 SQLite ALTER TABLE + 索引创建",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/services/db_migration.py"
+      ],
+      "tests": [
+        "tests/test_db_migration.py"
+      ],
+      "entry_points": [],
+      "notes": "启动时自动执行 run_all_migrations()，每个迁移函数幂等安全"
+    },
+
+    {
+      "id": "F007",
+      "name": "LLM 设置系统",
+      "description": "Provider 切换、API Key 管理、默认参数、脱敏显示、连接测试",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/llm_router.py",
+        "backend/services/llm_settings_store.py",
+        "backend/services/llm_service.py",
+        "web/src/views/SettingsView.vue"
+      ],
+      "tests": [
+        "tests/test_llm_router.py",
+        "tests/test_llm_service.py",
+        "tests/test_llm_settings_store.py"
+      ],
+      "entry_points": [
+        "GET /api/settings/llm",
+        "PUT /api/settings/llm",
+        "GET /api/settings/llm/providers",
+        "POST /api/settings/llm/test"
+      ]
+    },
+
+    {
+      "id": "F008",
+      "name": "世界四要素系统",
+      "description": "World / Location / Item / Relationship CRUD + 天气 + 季节 + 世界引擎",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/world_router.py",
+        "backend/world/world_engine.py",
+        "backend/world/location_aware.py",
+        "backend/world/location_tree.py",
+        "backend/world/relationship_network.py",
+        "backend/world/season_calendar.py",
+        "backend/world/location_dual_write.py"
+      ],
+      "tests": [
+        "tests/test_world_router.py",
+        "tests/test_world_system.py",
+        "tests/test_world_engine.py",
+        "tests/test_world_injection.py",
+        "tests/test_relationship_network.py",
+        "tests/test_location_tree.py",
+        "tests/test_location_dual_write.py"
+      ],
+      "entry_points": ["GET /api/worlds", "GET /api/worlds/{wid}/state", "POST /api/worlds/{wid}/tick", "GET /api/characters/{cid}/world-context"]
+    },
+
+    {
+      "id": "F009",
+      "name": "记忆系统（衰减+摘要）",
+      "description": "5 主题差异化 Ebbinghaus 衰减 + 自适应摘要触发 + 角色级参数覆盖",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/modules/memory_decay.py",
+        "backend/modules/summary_trigger.py",
+        "backend/memory/context_manager.py",
+        "backend/memory/long_term.py",
+        "backend/memory/short_term.py",
+        "backend/memory/knowledge_base.py"
+      ],
+      "tests": [
+        "tests/test_memory_decay.py",
+        "tests/test_summary_trigger.py",
+        "tests/test_context_manager.py",
+        "tests/test_long_term.py",
+        "tests/test_short_term.py",
+        "tests/test_knowledge_base.py"
+      ],
+      "entry_points": [
+        "GET /api/jiwen/{id}/memory-stats",
+        "POST /api/jiwen/{id}/run-decay",
+        "POST /api/jiwen/{id}/check-summary",
+        "GET /api/jiwen/{id}/summaries"
+      ]
+    },
+
+    {
+      "id": "F010",
+      "name": "角色创建成功反馈",
+      "description": "创建成功后 Toast 通知 + 1.5s 自动跳转到 Chat 页面",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "web/src/views/CreateView.vue",
+        "web/src/composables/useToast.ts",
+        "web/src/components/ToastContainer.vue",
+        "web/src/App.vue"
+      ],
+      "tests": [],
+      "entry_points": [],
+      "notes": "依赖 Toast 系统 (useToast + ToastContainer)"
+    },
+
+    {
+      "id": "F011",
+      "name": "事件推进系统",
+      "description": "事件 CRUD + 时间迭代 + 自动推进 + 叙事生成",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/event_router.py",
+        "backend/modules/event.py",
+        "backend/modules/time.py"
+      ],
+      "tests": [
+        "tests/test_event_router.py",
+        "tests/test_event_pipeline.py",
+        "tests/test_day1_event_persistence.py"
+      ],
+      "entry_points": [
+        "GET /api/characters/{id}/events",
+        "POST /api/event/advance",
+        "POST /api/time/iterate",
+        "POST /api/time/auto"
+      ]
+    },
+
+    {
+      "id": "F012",
+      "name": "成长系统",
+      "description": "LLM 驱动的角色成长（性格/记忆/状态变更）",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/growth_router.py",
+        "backend/modules/growth.py",
+        "backend/crud/growth.py"
+      ],
+      "tests": [
+        "tests/test_growth_router.py"
+      ],
+      "entry_points": ["POST /api/growth/trigger"]
+    },
+
+    {
+      "id": "F013",
+      "name": "Session 会话管理",
+      "description": "ChatSession CRUD + 级联删除 + 与角色/对话关联",
+      "status": "completed",
+      "verified_at": "2026-06-29",
+      "files": [
+        "backend/api/session_router.py",
+        "backend/services/chat_session_crud.py"
+      ],
+      "tests": [
+        "tests/test_session_router.py",
+        "tests/test_chat_session_crud.py"
+      ],
+      "entry_points": [
+        "GET /api/sessions",
+        "POST /api/sessions",
+        "PATCH /api/sessions/{id}",
+        "DELETE /api/sessions/{id}"
+      ]
+    }
+  ],
+
+  "_total": 13,
+  "_verified_count": 13
+}

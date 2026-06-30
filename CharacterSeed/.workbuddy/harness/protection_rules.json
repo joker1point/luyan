@@ -1,0 +1,211 @@
+{
+  "_schema": "1.1",
+  "_description": "Harness 保护约束规则。AI 开发助手必须遵守以下边界。任何修改须先经 pre_check.py 通过四道闸门。",
+  "_updated": "2026-06-29T22:30:00+08:00",
+
+  "global_constraints": {
+    "max_files_per_change": 10,
+    "require_feature_registry_check": true,
+    "require_core_lock_check": true,
+    "require_pitfall_check": true,
+    "require_danger_pattern_check": true,
+    "require_regression_test": true,
+    "auto_rollback_on_test_failure": true,
+    "require_change_log": true,
+    "block_on_critical_severity": true
+  },
+
+  "priority_categories": {
+    "_description": "四类优先保护内容。pre_check.py 检测到命中以下任一类别时按相应策略处理。",
+    "01_old_feature": {
+      "description": "旧功能 — 所有已上线并稳定运行的历史功能模块",
+      "source": "feature_registry.json::features[status=completed]",
+      "policy": "modifications require pre-check + regression test on associated tests",
+      "block_severity": "high"
+    },
+    "02_core_flow": {
+      "description": "核心流程 — 支撑业务运转的关键流程和核心算法",
+      "source": "core_lock.json::locked_modules",
+      "policy": "any modification requires human approval via approval.py workflow",
+      "block_severity": "critical"
+    },
+    "03_repeated_pitfall": {
+      "description": "重复踩坑 — 历史上多次出现问题并已解决的特定功能点",
+      "source": "pitfall_registry.json::pitfalls[frequency>=2]",
+      "policy": "must acknowledge pitfall ID in change purpose; run associated guard tests",
+      "block_severity": "high"
+    },
+    "04_hard_to_debug": {
+      "description": "难排查 — 定位和修复难度大、影响范围广的复杂功能模块",
+      "source": "pitfall_registry.json::pitfalls[difficulty=hard]",
+      "policy": "require extra regression coverage + change log with detailed rationale",
+      "block_severity": "high"
+    }
+  },
+
+  "access_levels": {
+    "read_only": {
+      "description": "完全禁止修改。AI 只能读取，任何写操作须人工审批。",
+      "directories": [],
+      "files": [
+        "backend/services/db_migration.py",
+        "backend/models.py"
+      ],
+      "modules": []
+    },
+    "restricted": {
+      "description": "允许修改，但须在变更前运行 pre_check.py 检查冲突，变更后运行回归验证。",
+      "directories": [
+        "backend/jiwen/",
+        "backend/modules/",
+        "backend/services/",
+        "backend/api/",
+        "backend/crud/",
+        "backend/world/",
+        "backend/memory/"
+      ],
+      "files": [],
+      "modules": []
+    },
+    "sandbox": {
+      "description": "自由修改，无需审批。适合测试文件、新功能模块。",
+      "directories": [
+        "tests/",
+        "web/src/",
+        ".workbuddy/",
+        "docs/",
+        "data/"
+      ],
+      "files": [],
+      "modules": []
+    }
+  },
+
+  "danger_patterns": {
+    "description": "以下代码模式在任何情况下都禁止执行，检测到即阻断。",
+    "patterns": [
+      {
+        "id": "DROP_TABLE",
+        "pattern": "(?i)DROP\\s+TABLE",
+        "severity": "critical",
+        "message": "禁止删除数据库表"
+      },
+      {
+        "id": "DELETE_ALL",
+        "pattern": "(?i)DELETE\\s+FROM\\s+\\w+\\s*(?:WHERE\\s+1\\s*=\\s*1|;|$)(?!\\s*WHERE)",
+        "severity": "critical",
+        "message": "禁止无 WHERE 条件的全表删除"
+      },
+      {
+        "id": "RM_RF_SYSTEM",
+        "pattern": "rm\\s+-rf\\s+/(?!tmp)",
+        "severity": "critical",
+        "message": "禁止 rm -rf / 系统目录"
+      },
+      {
+        "id": "DROP_DATABASE",
+        "pattern": "(?i)DROP\\s+DATABASE",
+        "severity": "critical",
+        "message": "禁止删除数据库"
+      },
+      {
+        "id": "FORCE_PUSH",
+        "pattern": "git\\s+push\\s+--force(?!-with-lease)",
+        "severity": "high",
+        "message": "禁止强制推送。使用 --force-with-lease 需人工审批"
+      },
+      {
+        "id": "SKIP_HOOKS",
+        "pattern": "--no-verify|--no-gpg-sign|HUSKY=0",
+        "severity": "high",
+        "message": "禁止跳过 Git hooks"
+      },
+      {
+        "id": "HARD_RESET",
+        "pattern": "git\\s+reset\\s+--hard",
+        "severity": "high",
+        "message": "禁止 git reset --hard，使用 harness.py rollback 走受控回滚"
+      },
+      {
+        "id": "DISABLE_TESTS",
+        "pattern": "pytest.*-p\\s+no:cacheprovider|@pytest\\.mark\\.skip|unittest\\.skip",
+        "severity": "medium",
+        "message": "禁止跳过测试用例（除非显式标注理由）"
+      }
+    ]
+  },
+
+  "conflict_rules": {
+    "description": "冲突检测规则。涉及以下跨模块修改时，必须人工确认。",
+    "rules": [
+      {
+        "id": "CROSS_MODEL_API",
+        "description": "同时修改 models.py 和对应 router.py 时",
+        "severity": "high",
+        "detector": "files_include_any:[backend/models.py] AND files_match_pattern:backend/api/.*_router\\.py"
+      },
+      {
+        "id": "DB_MIGRATION",
+        "description": "任何对 models.py 的修改（涉及新增/删除/修改列）",
+        "severity": "critical",
+        "detector": "files_include_any:[backend/models.py]"
+      },
+      {
+        "id": "JIWEN_CORE",
+        "description": "修改 jiwen_core.py 中的 DEFAULT_RATES/DEFAULT_THRESHOLDS",
+        "severity": "high",
+        "detector": "files_include_any:[backend/jiwen/jiwen_core.py]"
+      },
+      {
+        "id": "INTERACTION_PIPELINE",
+        "description": "修改 interaction.py 中的 Director.analyze() 或 Actor.generate() 签名",
+        "severity": "high",
+        "detector": "files_include_any:[backend/modules/interaction.py]"
+      },
+      {
+        "id": "MULTI_MODULE_SPRAWL",
+        "description": "单次变更跨 3+ 个一级模块目录（jiwen/modules/services/api/crud）",
+        "severity": "medium",
+        "detector": "distinct_top_dirs_in:backend/* > 3"
+      }
+    ]
+  },
+
+  "quality_gates": {
+    "_description": "AI 变更后必须通过的质量验收标准。regression_runner.py 会自动评估。",
+    "functional": {
+      "description": "功能完整性 — 所有受影响 feature 的关联测试 100% 通过",
+      "required": true,
+      "block_on_fail": true
+    },
+    "regression": {
+      "description": "回归测试 — 全量 pytest 通过率 ≥ 95%，且无新增 failing 用例",
+      "required": true,
+      "block_on_fail": true,
+      "threshold_pass_rate": 0.95
+    },
+    "no_new_pitfall": {
+      "description": "不引入已知 pitfall 模式（通过 pitfall_registry 的 guard_tests）",
+      "required": true,
+      "block_on_fail": true
+    },
+    "lint_clean": {
+      "description": "Python 语法/导入完整（py_compile 全部变更文件）",
+      "required": true,
+      "block_on_fail": true
+    },
+    "build_ok": {
+      "description": "前端变更须通过 vite build（仅当 web/src 下文件被修改时）",
+      "required": false,
+      "block_on_fail": true,
+      "trigger_when": "files_match_pattern:web/src/.*"
+    }
+  },
+
+  "feedback_loop": {
+    "_description": "反馈循环 — 收集 harness 自身运行问题，定期迭代保护规则",
+    "incident_log": ".workbuddy/harness/logs/incidents.jsonl",
+    "review_cadence": "每周一次（由人工触发 harness.py review）",
+    "rules_update_trigger": "同一 pitfall 命中 ≥3 次或 critical 事件发生时"
+  }
+}

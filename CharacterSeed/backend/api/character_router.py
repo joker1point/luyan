@@ -17,10 +17,12 @@ character_router — 角色 CRUD + 描述润色 + soul.md 管理。
   - PATCH 端点统一字段白名单校验，CRUD 层负责 dict/list → JSON 自动序列化。
 """
 from __future__ import annotations
+import json
 import logging
+import time
 from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -35,6 +37,7 @@ from backend.schemas import (
 from backend.crud import character as character_crud
 from backend.crud import memory as memory_crud
 from backend.state import get_creation_module
+from backend.models import Character
 from backend.modules.interaction import (
     cache_invalidate as invalidate_response_cache,
     char_data_cache_invalidate,
@@ -71,6 +74,8 @@ async def create_character(
         personality = parsed_data.get("personality", {})
         current_state = parsed_data.get("current_state", {})
         initial_memories = parsed_data.get("initial_memories", [])
+        # v009A: 外貌描述（LLM 在创建时已生成），dict 自动序列化为 JSON 字符串
+        appearance = parsed_data.get("appearance")
 
         db_character = character_crud.create_character(
             db=db,
@@ -80,6 +85,7 @@ async def create_character(
             personality=personality,
             current_state=current_state,
             creation_raw=raw_response,
+            appearance=appearance,  # v009A: dict 或 str，crud 会自动序列化
         )
 
         # Day 3：初始记忆写入 memories 表（type=event）
@@ -263,3 +269,219 @@ def update_character_soul(
     char_data_cache_invalidate(character_id)
 
     return updated
+
+
+# ============================================================
+# v009 角色头像自动生成（Agnes Image/Video API）
+# ============================================================
+# 端点：
+#   POST /api/characters/{id}/avatar/generate   异步生成 4 张候选图
+#   GET  /api/characters/{id}/avatar/status     查询当前状态 + 候选图
+#   POST /api/characters/{id}/avatar/select     选定某张候选图为正式头像
+#   POST /api/characters/{id}/avatar/video      异步生成视频头像
+# 设计：
+#   - 实际生成任务放到 FastAPI BackgroundTasks 异步跑，HTTP 立即返回 202
+#   - 任务运行中把 status 写回 DB（前端轮询 status 即可）
+#   - 失败时回滚 avatar_video_status='failed'，不影响角色其他功能
+# ============================================================
+
+
+class AvatarGenerateRequest(BaseModel):
+    style: str = Field("anime", description="anime/realistic/watercolor/pixel/ink/comic")
+    expression: str = Field("neutral", description="neutral/smile/serious/shy/angry")
+    background: str = Field("simple", description="simple/scene/transparent")
+    regenerate: bool = Field(False, description="True=忽略已有 candidates 重新生成")
+
+
+class AvatarSelectRequest(BaseModel):
+    index: int = Field(0, ge=0, description="候选图下标 0..N-1")
+
+
+def _run_avatar_generation(
+    character_id: int,
+    style: str,
+    expression: str,
+    background: str,
+    regenerate: bool,
+) -> None:
+    """
+    后台任务：调 AvatarGenerationService 生成头像并写回 DB。
+    使用独立 session（BackgroundTasks 不共享请求的 session）。
+    """
+    from backend.services.avatar_generation_service import AvatarGenerationService
+    from backend.database import SessionLocal
+
+    service = AvatarGenerationService.instance()
+    db = SessionLocal()
+    try:
+        # [v9-fix] 用 asyncio.run 让异步生成在后台线程中跑通
+        # FastAPI BackgroundTasks 在 threadpool 中跑同步函数，
+        # 所以这里用 asyncio.run 起一个事件循环即可
+        import asyncio
+        result = asyncio.run(
+            service.generate_avatars(
+                character_id=character_id,
+                db=db,
+                style=style,
+                expression=expression,
+                background=background,
+                regenerate=regenerate,
+            )
+        )
+        logger.info(
+            "角色 %d 头像生成完成：%d 张候选图 (status=%s)",
+            character_id, len(result.get("candidates", [])), result.get("status"),
+        )
+    except Exception as e:
+        logger.exception("角色 %d 头像生成失败: %s", character_id, e)
+    finally:
+        db.close()
+
+
+def _run_video_generation(character_id: int, motion: str, duration: int) -> None:
+    """后台任务：调 AvatarGenerationService 生成视频头像"""
+    from backend.services.avatar_generation_service import AvatarGenerationService
+    from backend.database import SessionLocal
+    import asyncio
+
+    service = AvatarGenerationService.instance()
+    db = SessionLocal()
+    try:
+        result = asyncio.run(
+            service.generate_avatar_video(
+                character_id=character_id,
+                db=db,
+                motion=motion,
+                duration=duration,
+            )
+        )
+        logger.info("角色 %d 视频头像生成完成：%s", character_id, result)
+    except Exception as e:
+        logger.exception("角色 %d 视频头像生成失败: %s", character_id, e)
+    finally:
+        db.close()
+
+
+@router.post("/api/characters/{character_id}/avatar/generate")
+async def generate_avatar(
+    character_id: int,
+    request: AvatarGenerateRequest,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """
+    异步生成角色头像（4 张候选图）。
+    HTTP 立即返回 202 + task_id；前端轮询 GET /avatar/status 获取结果。
+    """
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    task_id = f"avatar-{character_id}-{int(time.time())}"
+
+    # 提交后台任务（用 BackgroundTasks，简单且够用）
+    background_tasks.add_task(
+        _run_avatar_generation,
+        character_id=character_id,
+        style=request.style,
+        expression=request.expression,
+        background=request.background,
+        regenerate=request.regenerate,
+    )
+
+    return {
+        "status": "pending",
+        "task_id": task_id,
+        "estimated_seconds": 30,
+        "character_id": character_id,
+    }
+
+
+@router.get("/api/characters/{character_id}/avatar/status")
+async def get_avatar_status(character_id: int, db: Session = Depends(get_db)):
+    """查询头像生成状态 + 候选图列表 + 视频头像状态"""
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    candidates: List[str] = []
+    if character.avatar_candidates:
+        try:
+            candidates = json.loads(character.avatar_candidates)
+        except Exception:
+            candidates = []
+
+    return {
+        "status": "completed" if candidates else "none",
+        "candidates": [
+            {"url": url, "index": i} for i, url in enumerate(candidates)
+        ],
+        "selected_index": character.avatar_selected_index or 0,
+        "current_avatar": character.avatar_url,
+        "video_url": character.avatar_video_url,
+        "video_status": character.avatar_video_status or "none",
+        "generation_prompt": character.avatar_generation_prompt,
+        "generated_at": (
+            character.avatar_generated_at.isoformat()
+            if character.avatar_generated_at else None
+        ),
+    }
+
+
+@router.post("/api/characters/{character_id}/avatar/select")
+async def select_avatar(
+    character_id: int,
+    request: AvatarSelectRequest,
+    db: Session = Depends(get_db),
+):
+    """把第 N 张候选图"提升"为正式头像（同步）"""
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+
+    from backend.services.avatar_generation_service import AvatarGenerationService
+    import asyncio
+    service = AvatarGenerationService.instance()
+    try:
+        result = await service.select_avatar(
+            character_id=character_id, db=db, index=request.index,
+        )
+        # 清掉响应缓存，避免老头像被读出
+        char_data_cache_invalidate(character_id)
+        invalidate_response_cache(character_id)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.exception("select_avatar 失败: %s", e)
+        raise HTTPException(status_code=500, detail=f"选择头像失败: {e}")
+
+
+@router.post("/api/characters/{character_id}/avatar/video")
+async def generate_video_avatar(
+    character_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    """
+    异步生成视频头像（基于当前 avatar_url）。
+    立即返回 202；前端轮询 status 拿 video_url。
+    """
+    character = db.query(Character).filter(Character.id == character_id).first()
+    if not character:
+        raise HTTPException(status_code=404, detail="角色不存在")
+    if not character.avatar_url:
+        raise HTTPException(status_code=400, detail="请先生成静态头像")
+
+    # 默认 motion + duration
+    background_tasks.add_task(
+        _run_video_generation,
+        character_id=character_id,
+        motion="breathing",
+        duration=3,
+    )
+    return {
+        "status": "pending",
+        "estimated_seconds": 90,
+        "character_id": character_id,
+    }

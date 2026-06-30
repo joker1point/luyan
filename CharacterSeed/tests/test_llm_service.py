@@ -247,6 +247,17 @@ class TestCallWithMessages:
             self.service = LLMService()
             self.service.client = MagicMock()
             self.service.model = "test-model"
+            self.service._active_provider_id = "test"
+            self.service._task_routing = {}
+            self.service._PROVIDER_CACHE["test"] = {
+                "client": self.service.client,
+                "model": "test-model",
+                "base_url": "",
+                "api_key": "test",
+                "http_client": None,
+                "provider": "test",
+                "loaded_at": 0,
+            }
             yield
 
     def test_valid_messages(self):

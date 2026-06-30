@@ -23,6 +23,12 @@ from unittest.mock import MagicMock, patch, PropertyMock
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# 事件管线已从 interaction.py 移除（v2.0 重构），全部测试跳过
+pytestmark = pytest.mark.skip(
+    reason="事件管线（compute_personality_influence / validate_event_capabilities / "
+           "FALLBACK_*_EVENT_OUTPUT 等）已在 v2.0 重构中移除，测试待按新架构重写",
+)
+
 
 # ============================================================================
 # 1. compute_personality_influence() 人格加权函数测试

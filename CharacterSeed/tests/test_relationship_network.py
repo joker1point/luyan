@@ -303,22 +303,23 @@ class TestTickBroadcastIntegration:
         from backend.world import get_world_engine, reset_world_engine
         from backend.models import World
         from backend.crud.character import update_character
-        # [P0-fix] 必须从 backend.database 拿 conftest 注入的 TestingSessionLocal
-        # 直连 `from tests.conftest import TestingSessionLocal` 会因 pytest 把 conftest
-        # 加载为 `conftest`（非 `tests.conftest`）而落到一个独立的测试 DB，结果报
-        # "no such table: worlds"。这里用 conftest 在 setup 阶段 monkey-patch 到
-        # backend.database.TestingSessionLocal 的同一个实例。
-        from backend.database import TestingSessionLocal
+        from backend.world.world_engine import WorldEngine
+
+        # 创建 world id=1（测试 DB 没有种子世界）
+        db.add(World(id=1, name="test-world", season="winter", day_of_year=1, year=1))
+        db.commit()
 
         # [P0-fix] broadcast_world_event 按 world_id 查角色；sample_character
         # 创建时 world_id=None → 需绑定到默认世界
         update_character(db, sample_character.id, world_id=1)
         update_character(db, sample_character_2.id, world_id=1)
+        # _db() 会 close session 导致实例 detached，提前捕获 id
+        cid1 = sample_character.id
+        cid2 = sample_character_2.id
 
         # 重置单例，让它用测试 session
         reset_world_engine()
-        from backend.world.world_engine import WorldEngine
-        engine = WorldEngine(session_factory=TestingSessionLocal)
+        engine = WorldEngine(session_factory=lambda: db)
 
         # 把世界推到 day 1（winter）
         with engine._db() as db2:
@@ -335,7 +336,7 @@ class TestTickBroadcastIntegration:
         # 验证角色 timeline 有立春事件
         from backend.models import Event
         with engine._db() as db2:
-            for cid in [sample_character.id, sample_character_2.id]:
+            for cid in [cid1, cid2]:
                 ev = db2.query(Event).filter(
                     Event.character_id == cid,
                 ).order_by(Event.id.desc()).first()
@@ -347,11 +348,13 @@ class TestTickBroadcastIntegration:
         """[P1] tick 1 天（无季节切换）→ 不广播"""
         from backend.world.world_engine import WorldEngine, reset_world_engine
         from backend.models import World, Event
-        # [P0-fix] 见 test_season_change_broadcasts_to_chars：必须从 backend.database 拿
-        from backend.database import TestingSessionLocal
+
+        # 创建 world id=1（测试 DB 没有种子世界）
+        db.add(World(id=1, name="test-world", season="spring", day_of_year=100, year=1))
+        db.commit()
 
         reset_world_engine()
-        engine = WorldEngine(session_factory=TestingSessionLocal)
+        engine = WorldEngine(session_factory=lambda: db)
         with engine._db() as db2:
             w = db2.get(World, 1)
             w.day_of_year = 100
@@ -371,8 +374,11 @@ class TestTickBroadcastIntegration:
 class TestRelationshipGraphEndpoint:
     def test_graph_returns_nodes_and_edges(self, client, db, sample_character, sample_character_2):
         """[P1] /api/worlds/1/relationship-graph → nodes + edges"""
-        from backend.models import Relationship
+        from backend.models import Relationship, World
         from backend.crud.character import update_character
+        # 创建 world id=1（测试 DB 没有种子世界）
+        db.add(World(id=1, name="test-world", season="spring", day_of_year=1, year=1))
+        db.commit()
         # [P0-fix] 节点按 world_id 过滤；sample_character 创建时 world_id=None
         # → 需要先绑定到默认世界（id=1）才能在图里出现
         update_character(db, sample_character.id, world_id=1)
@@ -411,6 +417,10 @@ class TestRelationshipGraphEndpoint:
     def test_broadcast_event_endpoint(self, client, db, sample_character, sample_character_2):
         """[P1] /api/worlds/1/broadcast-event → 创建 WorldEvent + 广播"""
         from backend.crud.character import update_character
+        from backend.models import World
+        # 创建 world id=1（测试 DB 没有种子世界）
+        db.add(World(id=1, name="test-world", season="spring", day_of_year=1, year=1))
+        db.commit()
         update_character(db, sample_character.id, world_id=1)
         update_character(db, sample_character_2.id, world_id=1)
 
@@ -431,7 +441,10 @@ class TestRelationshipGraphEndpoint:
     def test_broadcast_event_with_location(self, client, db, sample_character):
         """[P1] 指定 location_id 的 broadcast"""
         from backend.crud.character import update_character
-        from backend.models import Location
+        from backend.models import Location, World
+        # 创建 world id=1（测试 DB 没有种子世界）
+        db.add(World(id=1, name="test-world", season="spring", day_of_year=1, year=1))
+        db.commit()
         update_character(db, sample_character.id, world_id=1)
 
         loc = Location(world_id=1, name="霓虹街", kind="city", climate="temperate")
